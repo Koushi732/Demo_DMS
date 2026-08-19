@@ -2,17 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  FileText,
-  GitBranch,
-  Brain,
-  History,
-  Shield,
-  Settings,
-  HelpCircle,
-  ChevronDown,
-} from "lucide-react";
+import { Brain, ChevronDown, FileText, GitBranch, HelpCircle, History, LayoutDashboard, Settings, Shield } from "lucide-react";
 
 const navItems = [
   {
@@ -177,6 +167,20 @@ export function Sidebar() {
               </li>
             );
           })}
+          <li>
+            <button
+              onClick={async () => {
+                const { createClient } = await import('@/utils/supabase/client');
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+              }}
+              className="w-full flex items-center gap-[16px] px-[16px] py-[8px] text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 rounded-[4px] text-body-md text-left"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Logout
+            </button>
+          </li>
         </ul>
       </div>
     </aside>

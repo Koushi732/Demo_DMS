@@ -310,3 +310,7 @@ organizations ─┬─ departments
 - `audit_logs(organization_id, document_id)`
 - `notifications(user_id, is_read)`
 - `workflow_steps(assigned_user_id, status)`
+
+## Initial Seeding
+
+For demo purposes, the database is seeded using \ackend/scripts/seed_master_admin.py\. This script does NOT use \create_all()\ and relies on the existing schema applied by Supabase migrations. It inserts the baseline Organization, Department, Role, Permissions, and links them to the Supabase Auth user.

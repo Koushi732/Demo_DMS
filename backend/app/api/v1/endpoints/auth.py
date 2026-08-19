@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Dict, Any
+from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user
 from app.database import get_db
-from app.models.auth import User
+from app.models.auth import User, Department, Role
+from app.schemas.auth import UserProfile, DepartmentResponse, RoleResponse
 
 router = APIRouter()
 
@@ -65,3 +66,78 @@ async def get_current_user_profile(
             "roles": [{"id": str(r.id), "name": r.name} for r in user.roles]
         }
     }
+
+from uuid import UUID
+from ..deps import get_current_organization_id
+
+@router.get("/users")
+async def list_users(
+    db: AsyncSession = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    org_id: str = Depends(get_current_organization_id)
+) -> Any:
+    """List users for the current organization."""
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.department), selectinload(User.roles))
+        .where(User.organization_id == UUID(org_id))
+    )
+    users = result.scalars().all()
+    
+    return [
+        {
+            "id": str(u.id),
+            "email": u.email,
+            "first_name": u.first_name,
+            "last_name": u.last_name,
+            "position": u.position,
+            "is_active": u.is_active,
+            "department": {"id": str(u.department.id), "name": u.department.name} if u.department else None,
+            "roles": [{"id": str(r.id), "name": r.name} for r in u.roles]
+        }
+        for u in users
+    ]
+
+@router.get("/departments")
+async def list_departments(
+    db: AsyncSession = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    org_id: str = Depends(get_current_organization_id)
+) -> Any:
+    """List departments for the current organization."""
+    result = await db.execute(
+        select(Department)
+        .where(Department.organization_id == UUID(org_id))
+    )
+    departments = result.scalars().all()
+    return [
+        {
+            "id": str(d.id),
+            "name": d.name,
+            "description": d.description,
+            "head_user_id": str(d.head_user_id) if d.head_user_id else None
+        }
+        for d in departments
+    ]
+
+@router.get("/roles")
+async def list_roles(
+    db: AsyncSession = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    org_id: str = Depends(get_current_organization_id)
+) -> Any:
+    """List roles for the current organization."""
+    result = await db.execute(
+        select(Role)
+        .where(Role.organization_id == UUID(org_id))
+    )
+    roles = result.scalars().all()
+    return [
+        {
+            "id": str(r.id),
+            "name": r.name,
+            "description": r.description,
+            "is_system_role": r.is_system_role
+        }
+        for r in roles
+    ]

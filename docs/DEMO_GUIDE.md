@@ -7,7 +7,7 @@
 
 | Name | Department | Position | DMS Role | Email |
 |---|---|---|---|---|
-| Admin User | IT | System Administrator | System Administrator | admin@aureonpharma.com |
+| Admin User | IT | Master Administrator | System Administrator | admin@aureonpharma.com |
 | Rahul Sharma | Quality Assurance | QA Manager | QA Manager | rahul.sharma@aureonpharma.com |
 | Priya Rao | Quality Assurance | QA Document Controller | QA Document Controller | priya.rao@aureonpharma.com |
 | Arjun Mehta | Production | Production Manager | Department Manager | arjun.mehta@aureonpharma.com |
@@ -16,7 +16,12 @@
 | Ananya Iyer | Regulatory Affairs | Regulatory Manager | Regulatory Manager | ananya.iyer@aureonpharma.com |
 | Kiran Patel | Production | Document Author | Document Author | kiran.patel@aureonpharma.com |
 
-**Default password for all demo users**: `AureonDemo2026!`
+> [!WARNING]
+> **DEVELOPMENT/CLIENT-DEMO CREDENTIALS ONLY**
+> The following credentials are for demonstration purposes only. Do NOT use them in a production environment.
+>
+> **Master Admin Password**: `AureonDemo@2026`
+> **Default password for all other demo users**: `AureonDemo2026!`
 
 ## Demo Documents
 

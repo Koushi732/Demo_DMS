@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Table, Text
+from sqlalchemy import Column, String, Boolean, ForeignKey, Table, Text, DateTime, func
 from sqlalchemy.orm import relationship
 
 from .base import UUIDMixin, TimestampMixin
@@ -39,7 +39,7 @@ class User(UUIDMixin, TimestampMixin, Base):
     last_name = Column(String(100), nullable=False)
     position = Column(String(255))
     is_active = Column(Boolean, default=True)
-    last_login_at = Column(String) # Simple string/datetime representation
+    last_login_at = Column(DateTime(timezone=True))
 
     organization = relationship("Organization", back_populates="users")
     department = relationship("Department", back_populates="users", foreign_keys=[department_id])
@@ -51,7 +51,7 @@ class Permission(UUIDMixin, Base):
     name = Column(String(100), nullable=False, unique=True)
     description = Column(Text)
     module = Column(String(100), nullable=False)
-    created_at = Column(String) # Base doesn't have TimestampMixin to avoid updated_at
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     roles = relationship("Role", secondary="role_permissions", back_populates="permissions")
 
@@ -73,7 +73,7 @@ role_permissions = Table(
     Base.metadata,
     Column("role_id", ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
     Column("permission_id", ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
-    Column("created_at", String)
+    Column("created_at", DateTime(timezone=True), server_default=func.now())
 )
 
 user_roles = Table(
@@ -82,5 +82,5 @@ user_roles = Table(
     Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
     Column("role_id", ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
     Column("assigned_by", ForeignKey("users.id", ondelete="SET NULL")),
-    Column("created_at", String)
+    Column("created_at", DateTime(timezone=True), server_default=func.now())
 )

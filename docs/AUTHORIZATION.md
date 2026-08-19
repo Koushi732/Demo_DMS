@@ -116,3 +116,7 @@ API Request
     → Execute Operation
     → Record Audit Event
 ```
+
+## Master Administrator
+
+The system provisions a Master Administrator role during initial deployment (see \seed_master_admin.py\). This role has all available permissions. However, it still operates within the standard RBAC framework and is subject to standard RLS policies. It is NOT implemented as a hardcoded email bypass.

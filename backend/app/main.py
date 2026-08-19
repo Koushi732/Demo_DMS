@@ -39,11 +39,18 @@ async def global_exception_handler(request: Request, exc: Exception):
 def health_check():
     return {"status": "ok", "service": "Aureon API"}
 
-from .api.v1.endpoints import auth
+from .api.v1.endpoints import auth, documents, workflows, audit, search, intelligence, notifications, sharing, dashboard
 
 @app.get("/api/v1")
 def api_root():
     return {"message": "Welcome to Aureon API v1"}
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
+app.include_router(workflows.router, prefix="/api/v1", tags=["workflows"])
+app.include_router(audit.router, prefix="/api/v1", tags=["audit"])
+app.include_router(search.router, prefix="/api/v1/documents", tags=["search"])
+app.include_router(intelligence.router, prefix="/api/v1/documents", tags=["intelligence"])
+app.include_router(notifications.router, prefix="/api/v1", tags=["notifications"])
+app.include_router(sharing.router, prefix="/api/v1", tags=["sharing"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])

@@ -1,176 +1,164 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Shield, Mail, Building2, Briefcase, Bell, Lock } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { FormField } from "@/components/ui/FormField";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { Badge, Building, Building2, Check, CheckCircle, ChevronRight, Edit, FileEdit, Filter, FolderOpen, History, Key, KeyRound, LayoutGrid, MessageSquare, Shield, Upload, X } from "lucide-react";
 
-export default function ProfilePage() {
-  const router = useRouter();
+interface UserProfile {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  position: string;
+  is_active: boolean;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+export default function CurrentUserProfilePage() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
-      try {
-        const supabase = createClient();
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          router.push("/login");
-          return;
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Fetch from public.users
+        const { data } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+          
+        if (data) {
+          setProfile(data as UserProfile);
         }
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to load profile data");
-        }
-
-        const data = await res.json();
-        setProfile(data.data); // data is { status: "success", data: user }
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     }
     loadProfile();
-  }, [router]);
+  }, []);
 
   if (loading) {
-    return <div className="p-[24px] text-body-md text-on-surface-variant">Loading profile...</div>;
+    return <div className="p-8 text-center text-on-surface-variant">Loading profile...</div>;
   }
 
-  if (error || !profile) {
-    return (
-      <div className="p-[24px] text-body-md text-error bg-error-container border border-error rounded-[8px] m-[24px]">
-        {error || "Failed to load profile"}
-      </div>
-    );
+  if (!profile) {
+    return <div className="p-8 text-center text-error">Failed to load profile. Please sign in again.</div>;
   }
 
-  // Use JWT claims or API response depending on what's available
-  const email = profile.email || "No email";
-  const firstName = profile.user_metadata?.first_name || "User";
-  const lastName = profile.user_metadata?.last_name || "";
-  const initial = firstName.charAt(0);
+  const fullName = `${profile.first_name} ${profile.last_name}`;
 
   return (
-    <div className="space-y-[24px]">
-      {/* Header */}
-      <div className="flex justify-between items-end border-b border-outline-variant pb-[16px]">
-        <div>
-          <h1 className="text-display-lg text-on-surface">Your Profile</h1>
-          <p className="text-body-md text-on-surface-variant mt-[4px]">
-            Manage your personal information and application preferences.
-          </p>
-        </div>
-        <Button>Save Changes</Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px]">
-        {/* Left Column: Avatar & Summary */}
-        <div className="col-span-1 space-y-[24px]">
-          <div className="card-level-1 p-[24px] flex flex-col items-center text-center rounded-[8px]">
-            <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-display-lg text-on-primary font-bold mb-[16px]">
-              {initial}
+    <div className="flex-1 overflow-y-auto p-[24px] bg-surface">
+      <div className="max-w-container-max mx-auto flex flex-col gap-[24px]">
+        
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-[16px] border-b border-outline-variant gap-[16px]">
+          <div>
+            <div className="flex items-center gap-[8px] mb-[4px]">
+              <span className="text-body-sm text-on-surface font-semibold">User Details</span>
             </div>
-            <h2 className="text-headline-md text-on-surface">{firstName} {lastName}</h2>
-            <p className="text-body-md text-on-surface-variant mb-[16px]">
-              {profile.position || "Position Unassigned"}
-            </p>
-            <div className="w-full flex items-center gap-[8px] bg-surface-container-low p-[12px] rounded-[4px] text-left">
-              <Shield size={20} className="text-primary shrink-0" />
-              <div>
-                <p className="text-label-caps text-on-surface-variant">DMS ROLE</p>
-                <p className="text-body-sm text-on-surface font-medium">Assigned by Organization</p>
-              </div>
-            </div>
+            <h1 className="text-headline-md text-primary">{fullName}</h1>
+          </div>
+          <div className="flex gap-[8px]">
+            <button className="px-[16px] py-[8px] border border-outline-variant rounded text-body-sm font-semibold text-on-surface bg-surface-container-lowest hover:bg-surface-container-low transition-colors flex items-center gap-[4px] shadow-sm">
+              <Edit size={18} /> Edit Profile
+            </button>
+            <button className="px-[16px] py-[8px] rounded text-body-sm font-semibold text-on-primary bg-primary hover:bg-primary/90 transition-colors flex items-center gap-[4px] shadow-sm">
+              <KeyRound size={18} /> Reset Password
+            </button>
           </div>
         </div>
-
-        {/* Right Column: Details & Settings */}
-        <div className="col-span-1 lg:col-span-2 space-y-[24px]">
+        
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-[24px]">
           
-          {/* Personal Information */}
-          <div className="card-level-1 rounded-[8px] overflow-hidden">
-            <div className="px-[24px] py-[16px] border-b border-outline-variant bg-surface-bright">
-              <h3 className="text-title-sm text-on-surface">Personal Information</h3>
-            </div>
-            <div className="p-[24px] grid grid-cols-1 md:grid-cols-2 gap-[24px]">
-              <FormField label="FIRST NAME" defaultValue={firstName} />
-              <FormField label="LAST NAME" defaultValue={lastName} />
-              <div className="md:col-span-2">
-                <FormField 
-                  label="EMAIL ADDRESS" 
-                  type="email" 
-                  defaultValue={email} 
-                  disabled
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Organizational Info */}
-          <div className="card-level-1 rounded-[8px] overflow-hidden">
-            <div className="px-[24px] py-[16px] border-b border-outline-variant bg-surface-bright">
-              <h3 className="text-title-sm text-on-surface">Organization</h3>
-            </div>
-            <div className="p-[24px] grid grid-cols-1 md:grid-cols-2 gap-[24px]">
-              <div className="flex flex-col gap-[8px]">
-                <label className="text-label-caps text-on-surface-variant">DEPARTMENT</label>
-                <div className="flex items-center gap-[12px] h-[36px] px-[12px] bg-surface-container-low border border-outline-variant rounded-[4px]">
-                  <Building2 size={16} className="text-on-surface-variant" />
-                  <span className="text-body-sm text-on-surface">Quality Assurance (QA)</span>
+          {/* Left Column: Identity & Primary Info */}
+          <div className="xl:col-span-1 flex flex-col gap-[24px]">
+            
+            {/* Identity Card */}
+            <div className="bg-surface-container-lowest border border-outline-variant rounded p-[24px] flex flex-col items-center text-center shadow-sm">
+              <div className="relative mb-[16px]">
+                <div className="w-32 h-32 rounded-full border-4 border-surface bg-primary-container text-on-primary-container flex items-center justify-center text-display-md shadow-sm">
+                  {profile.first_name[0]}{profile.last_name[0]}
                 </div>
+                {profile.is_active && (
+                  <div className="absolute bottom-1 right-1 w-6 h-6 bg-emerald-500 border-2 border-surface-container-lowest rounded-full flex items-center justify-center" title="Active"></div>
+                )}
               </div>
-              <div className="flex flex-col gap-[8px]">
-                <label className="text-label-caps text-on-surface-variant">POSITION</label>
-                <div className="flex items-center gap-[12px] h-[36px] px-[12px] bg-surface-container-low border border-outline-variant rounded-[4px]">
-                  <Briefcase size={16} className="text-on-surface-variant" />
-                  <span className="text-body-sm text-on-surface">QA Manager</span>
-                </div>
+              <h2 className="text-title-sm text-primary mb-[4px]">{fullName}</h2>
+              <p className="text-body-sm text-on-surface-variant mb-[16px]">{profile.email}</p>
+              
+              <div className="flex gap-[8px] mb-[24px]">
+                {profile.is_active ? (
+                  <span className="px-[8px] py-[4px] bg-emerald-50 text-emerald-700 border-l-2 border-emerald-500 text-label-caps flex items-center gap-[4px] rounded-r">
+                    <CheckCircle size={14} /> ACTIVE
+                  </span>
+                ) : (
+                  <span className="px-[8px] py-[4px] bg-error-container text-error border-l-2 border-error text-label-caps flex items-center gap-[4px] rounded-r">
+                    <X size={14} /> INACTIVE
+                  </span>
+                )}
               </div>
-            </div>
-          </div>
-
-          {/* Security & Preferences */}
-          <div className="card-level-1 rounded-[8px] overflow-hidden">
-            <div className="px-[24px] py-[16px] border-b border-outline-variant bg-surface-bright">
-              <h3 className="text-title-sm text-on-surface">Security & Preferences</h3>
-            </div>
-            <div className="p-[24px] space-y-[24px]">
-              <div className="flex items-center justify-between py-[12px] border-b border-outline-variant">
-                <div className="flex items-center gap-[12px]">
-                  <Lock size={20} className="text-on-surface-variant" />
-                  <div>
-                    <p className="text-body-md font-medium text-on-surface">Password</p>
-                    <p className="text-body-sm text-on-surface-variant">Last changed 45 days ago</p>
+              
+              <div className="w-full text-left space-y-[16px]">
+                <div>
+                  <div className="text-label-caps text-on-surface-variant mb-[4px]">Department</div>
+                  <div className="text-body-md text-on-surface flex items-center gap-[4px]">
+                    <Building2 size={18} className="text-primary" /> Information Technology
                   </div>
                 </div>
-                <Button variant="outline">Update</Button>
-              </div>
-              <div className="flex items-center justify-between py-[12px]">
-                <div className="flex items-center gap-[12px]">
-                  <Bell size={20} className="text-on-surface-variant" />
-                  <div>
-                    <p className="text-body-md font-medium text-on-surface">Email Notifications</p>
-                    <p className="text-body-sm text-on-surface-variant">Workflow assignments and periodic reviews</p>
-                  </div>
+                <div>
+                  <div className="text-label-caps text-on-surface-variant mb-[4px]">Position</div>
+                  <div className="text-body-md text-on-surface">{profile.position || 'Not specified'}</div>
                 </div>
-                <Button variant="outline">Configure</Button>
               </div>
             </div>
+            
+            {/* System Meta */}
+            <div className="bg-surface-container-lowest border border-outline-variant rounded p-[24px] shadow-sm">
+              <h3 className="text-title-sm text-primary mb-[16px] border-b border-outline-variant pb-[8px]">Account Information</h3>
+              <div className="space-y-[8px]">
+                <div className="flex justify-between items-center py-[4px] border-b border-surface-variant border-dashed last:border-0">
+                  <span className="text-body-sm text-on-surface-variant">Last Login</span>
+                  <span className="font-code-data text-on-surface">
+                    {profile.last_login_at ? new Date(profile.last_login_at).toLocaleString() : 'Never'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-[4px] border-b border-surface-variant border-dashed last:border-0">
+                  <span className="text-body-sm text-on-surface-variant">Account Created</span>
+                  <span className="font-code-data text-on-surface">
+                    {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-[4px] border-b border-surface-variant border-dashed last:border-0">
+                  <span className="text-body-sm text-on-surface-variant">Auth Method</span>
+                  <span className="text-body-sm text-on-surface flex items-center gap-[4px]"><Key size={16} /> Supabase Auth</span>
+                </div>
+              </div>
+            </div>
+            
           </div>
-
+          
+          {/* Right Column: Permissions, Scope & Activity */}
+          <div className="xl:col-span-2 flex flex-col gap-[24px]">
+            
+            {/* System Permissions Matrix */}
+            <div className="bg-surface-container-lowest border border-outline-variant rounded flex flex-col shadow-sm">
+              <div className="p-[16px] border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+                <h3 className="text-title-sm text-primary flex items-center gap-[8px]">
+                  <Shield className="text-primary" /> System Permissions
+                </h3>
+              </div>
+              <div className="p-[16px] text-body-sm text-on-surface-variant">
+                Permissions are fully controlled by Role-Based Access Control (RBAC). 
+                As a Master Administrator, all permissions are granted.
+              </div>
+            </div>
+            
+          </div>
         </div>
       </div>
     </div>
