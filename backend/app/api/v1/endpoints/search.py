@@ -5,9 +5,10 @@ from sqlalchemy import func, text
 from typing import Any, Dict, Optional, List
 from uuid import UUID
 
-from ...database import get_db
-from ..deps import get_current_user, get_current_organization_id
-from ...models.document import Document
+from app.database import get_db
+from app.api.deps import get_current_user, get_current_organization_id
+from app.models.document import Document, DocumentVersion
+from app.models.processing import DocumentExtractedText
 
 router = APIRouter()
 
@@ -25,12 +26,17 @@ async def full_text_search(
     organization_id: str = Depends(get_current_organization_id),
 ) -> Any:
     """Full-text search across documents using PostgreSQL tsvector."""
-    query = select(Document).filter(Document.organization_id == organization_id)
+    query = (
+        select(Document)
+        .join(DocumentVersion, Document.current_version_id == DocumentVersion.id)
+        .join(DocumentExtractedText, DocumentVersion.id == DocumentExtractedText.document_version_id)
+        .filter(Document.organization_id == organization_id)
+    )
     
     # Full-text search using tsvector
     search_query = func.plainto_tsquery('english', q)
     query = query.filter(
-        text("search_vector @@ plainto_tsquery('english', :q)").bindparams(q=q)
+        DocumentExtractedText.search_vector.op('@@')(search_query)
     )
     
     if status:
@@ -47,7 +53,7 @@ async def full_text_search(
 
     # Paginate & rank
     query = query.order_by(
-        text("ts_rank(search_vector, plainto_tsquery('english', :q)) DESC").bindparams(q=q)
+        func.ts_rank(DocumentExtractedText.search_vector, search_query).desc()
     )
     query = query.offset((page - 1) * page_size).limit(page_size)
     

@@ -11,6 +11,12 @@ export interface User {
   roles: Array<{ id: string; name: string }>;
 }
 
+export interface SystemSettings {
+  companyName: string;
+  systemUrl: string;
+  supportEmail: string;
+}
+
 export interface Department {
   id: string;
   name: string;
@@ -38,26 +44,19 @@ export const AdminService = {
   },
   
   async getPermissions(): Promise<any[]> {
-    return []; // Optional for now
+    return []; // Out of scope for current permissions model
   },
   
   async getDocumentTypes(): Promise<any[]> {
-    return []; // Optional for now
+    return apiClient.get<any[]>('/documents/types');
   },
 
   async getSystemSettings(): Promise<any> {
-    return {
-      companyName: 'Aureon Pharmaceuticals',
-      sessionTimeoutMinutes: 30,
-      passwordExpirationDays: 90,
-      maxUploadSizeMb: 50,
-      requireMfa: true,
-      allowedFileTypes: ['.pdf', '.doc', '.docx', '.xls', '.xlsx']
-    };
+    return apiClient.get<any>('/dashboard/settings');
   },
 
   async updateSystemSettings(settings: any): Promise<any> {
-    return settings;
+    return apiClient.put<any>('/dashboard/settings', settings);
   },
 
   async getUsers(): Promise<User[]> {
@@ -69,6 +68,6 @@ export const AdminService = {
   },
 
   async getWorkflowTemplates(): Promise<WorkflowTemplate[]> {
-    return apiClient.get<WorkflowTemplate[]>('/workflows/templates');
+    return apiClient.get<WorkflowTemplate[]>('/templates');
   }
 };

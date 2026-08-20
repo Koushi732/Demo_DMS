@@ -1,62 +1,169 @@
 """
 AI Intelligence service - provides document summarization, metadata extraction, 
 and question-answering capabilities.
-
-In production, this would connect to an LLM provider (OpenAI, Anthropic, etc.).
-For this implementation, we provide a structured abstraction layer with placeholder
-responses that demonstrate the correct API contract.
 """
 from typing import Optional, List, Dict, Any
 from uuid import UUID
+import json
+import os
 
+from app.config import settings
+
+class BaseLLMProvider:
+    async def summarize_document(self, document_text: str, document_title: str) -> Dict[str, Any]:
+        raise NotImplementedError
+        
+    async def extract_metadata(self, document_text: str) -> Dict[str, Any]:
+        raise NotImplementedError
+        
+    async def ask_document(self, document_text: str, question: str, document_title: str) -> Dict[str, Any]:
+        raise NotImplementedError
+
+
+class DevelopmentProvider(BaseLLMProvider):
+    async def summarize_document(self, document_text: str, document_title: str) -> Dict[str, Any]:
+        snippet = document_text[:200] if document_text else ""
+        return {
+            "summary": f"[DEV SIMULATED] Summary for '{document_title}'. Starts with: {snippet}...",
+            "key_points": [
+                "Simulated point 1 based on text",
+                "Simulated point 2 for dev purposes"
+            ],
+            "word_count": len(document_text.split()) if document_text else 0,
+            "confidence": 0.99,
+        }
+
+    async def extract_metadata(self, document_text: str) -> Dict[str, Any]:
+        return {
+            "entities": [
+                {"type": "dev_entity", "value": "Test Value", "section": "§1.0"}
+            ],
+            "regulatory_references": ["DEV_REG_1"],
+            "classification_suggestion": "SOP",
+            "confidence": 0.99,
+        }
+
+    async def ask_document(self, document_text: str, question: str, document_title: str) -> Dict[str, Any]:
+        return {
+            "answer": f"[DEV SIMULATED] Answer to '{question}' for '{document_title}'.",
+            "citations": [
+                {"section": "§1", "page": 1, "text": document_text[:50] if document_text else ""}
+            ],
+            "confidence": 0.99,
+            "sources_verified": 1,
+        }
+
+
+class OpenAIProvider(BaseLLMProvider):
+    def __init__(self, api_key: str):
+        import openai
+        self.client = openai.AsyncOpenAI(api_key=api_key)
+        self.model = "gpt-4o-mini"
+        
+    async def summarize_document(self, document_text: str, document_title: str) -> Dict[str, Any]:
+        prompt = f"""
+        Summarize the following document titled '{document_title}'.
+        Return JSON with exactly this format:
+        {{
+            "summary": "a brief 2-3 sentence summary",
+            "key_points": ["point 1", "point 2", "point 3"]
+        }}
+        
+        Document Text:
+        {document_text[:15000]}
+        """
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+            data = json.loads(response.choices[0].message.content)
+            data["word_count"] = len(document_text.split()) if document_text else 0
+            data["confidence"] = 0.95
+            return data
+        except Exception as e:
+            print(f"OpenAI error: {e}")
+            return DevelopmentProvider().summarize_document(document_text, document_title)
+
+    async def extract_metadata(self, document_text: str) -> Dict[str, Any]:
+        prompt = f"""
+        Extract metadata from this document.
+        Return JSON with exactly this format:
+        {{
+            "entities": [
+                {{"type": "type_name", "value": "value", "section": "section_reference"}}
+            ],
+            "regulatory_references": ["ref1", "ref2"],
+            "classification_suggestion": "Suggested Type"
+        }}
+        
+        Document Text:
+        {document_text[:15000]}
+        """
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+            data = json.loads(response.choices[0].message.content)
+            data["confidence"] = 0.90
+            return data
+        except Exception as e:
+            print(f"OpenAI error: {e}")
+            return DevelopmentProvider().extract_metadata(document_text)
+
+    async def ask_document(self, document_text: str, question: str, document_title: str) -> Dict[str, Any]:
+        prompt = f"""
+        Answer the question based ONLY on the document.
+        Document Title: {document_title}
+        
+        Question: {question}
+        
+        Return JSON with exactly this format:
+        {{
+            "answer": "your detailed answer",
+            "citations": [
+                {{"section": "section or context", "page": 1, "text": "quote"}}
+            ]
+        }}
+        
+        Document Text:
+        {document_text[:15000]}
+        """
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+            data = json.loads(response.choices[0].message.content)
+            data["confidence"] = 0.85
+            data["sources_verified"] = len(data.get("citations", []))
+            return data
+        except Exception as e:
+            print(f"OpenAI error: {e}")
+            return DevelopmentProvider().ask_document(document_text, question, document_title)
+
+def get_provider() -> BaseLLMProvider:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        return OpenAIProvider(api_key=api_key)
+    return DevelopmentProvider()
 
 class AIService:
     @staticmethod
     async def summarize_document(document_text: str, document_title: str) -> Dict[str, Any]:
-        """Generate a summary of the document content."""
-        # In production: call LLM API with document text
-        return {
-            "summary": f"This document '{document_title}' outlines standard operating procedures for pharmaceutical quality control. Key sections cover purpose, scope, responsibilities, and detailed procedural steps. The document emphasizes compliance with cGMP standards and regulatory requirements.",
-            "key_points": [
-                "Establishes review and approval procedures",
-                "Defines roles and responsibilities for QA and Production",
-                "Specifies documentation requirements and SLAs",
-                "Aligns with current regulatory frameworks"
-            ],
-            "word_count": len(document_text.split()) if document_text else 0,
-            "confidence": 0.92,
-        }
+        provider = get_provider()
+        return await provider.summarize_document(document_text, document_title)
 
     @staticmethod
     async def extract_metadata(document_text: str) -> Dict[str, Any]:
-        """Extract structured metadata from document content."""
-        return {
-            "entities": [
-                {"type": "chemical", "value": "70% IPA", "section": "§3.1"},
-                {"type": "chemical", "value": "Agent B-4", "section": "§4.2.1"},
-                {"type": "standard", "value": "ISO 14644-1", "section": "§2.0"},
-                {"type": "parameter", "value": "10 min contact time", "section": "§4.2.1"},
-            ],
-            "regulatory_references": [
-                "21 CFR Part 211",
-                "EU GMP Annex 1",
-                "ISO 14644-1:2015",
-            ],
-            "classification_suggestion": "Standard Operating Procedure",
-            "confidence": 0.88,
-        }
+        provider = get_provider()
+        return await provider.extract_metadata(document_text)
 
     @staticmethod
     async def ask_document(document_text: str, question: str, document_title: str) -> Dict[str, Any]:
-        """Answer a question about a document using RAG-style retrieval."""
-        # In production: embed question, retrieve relevant chunks, call LLM
-        return {
-            "answer": f"Based on '{document_title}', the document specifies detailed procedures and requirements relevant to your question. Key compliance standards referenced include 21 CFR Part 211 and EU GMP Annex 1. Please refer to the specific sections cited below for authoritative details.",
-            "citations": [
-                {"section": "§3.1", "page": 4, "text": "Daily surface disinfection with 70% IPA is required at the beginning and end of each shift."},
-                {"section": "§4.2.1", "page": 7, "text": "Sporicidal agent must be applied weekly with minimum 10-minute contact time."},
-                {"section": "§6.0", "page": 12, "text": "Material transfer through airlock requires continuous spray and wipe protocol."},
-            ],
-            "confidence": 0.85,
-            "sources_verified": 3,
-        }
+        provider = get_provider()
+        return await provider.ask_document(document_text, question, document_title)

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from typing import Any, Dict
 
-from ...database import get_db
-from ..deps import get_current_user
+from app.database import get_db
+from app.api.deps import get_current_user
 
 router = APIRouter()
 

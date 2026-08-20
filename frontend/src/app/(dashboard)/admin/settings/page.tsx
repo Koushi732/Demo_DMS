@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { ChevronRight, Save } from "lucide-react";
-import { AdminService } from "@/services/adminService";
-import { DemoSystemSettings } from "@/data/demo";
+import { AdminService, SystemSettings } from "@/services/adminService";
 
 export default function SystemSettingsPage() {
-  const [settings, setSettings] = useState<DemoSystemSettings | null>(null);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

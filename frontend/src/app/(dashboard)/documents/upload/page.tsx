@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { UploadCloud, X, File, AlertCircle, CheckCircle2, ChevronRight } from "lucide-react";
+import { UploadCloud, X, File, AlertCircle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DocumentService, DocumentType } from "@/services/documentService";
 
@@ -17,7 +17,7 @@ export default function DocumentUploadPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [documentTypeId, setDocumentTypeId] = useState("");
-  const [department, setDepartment] = useState("");
+  // const [department, setDepartment] = useState("");
   const [classification, setClassification] = useState("Internal Public");
   const [tagsInput, setTagsInput] = useState("");
   
@@ -33,7 +33,7 @@ export default function DocumentUploadPage() {
         if (types.length > 0) {
           setDocumentTypeId(types[0].id);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to load document types:", err);
       }
     }
@@ -117,8 +117,8 @@ export default function DocumentUploadPage() {
 
       // 3. Navigate to processing/details
       router.push(`/documents/${doc.id}/processing`);
-    } catch (err: any) {
-      setError(err.message || "An error occurred during upload.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred during upload.");
       setIsSubmitting(false);
     }
   };

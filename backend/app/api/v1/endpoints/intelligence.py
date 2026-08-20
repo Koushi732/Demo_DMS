@@ -6,11 +6,12 @@ from typing import Any, Dict
 from uuid import UUID
 from pydantic import BaseModel
 
-from ...database import get_db
-from ..deps import get_current_user, get_current_organization_id
-from ...models.document import Document
-from ...services.ai_service import AIService
-from ...services.audit_service import AuditService
+from app.database import get_db
+from app.api.deps import get_current_user, get_current_organization_id
+from app.models.document import Document
+from app.models.processing import DocumentExtractedText
+from app.services.ai_service import AIService
+from app.services.audit_service import AuditService
 
 router = APIRouter()
 
@@ -27,9 +28,7 @@ async def get_document_summary(
     """Get AI summary of a document."""
     doc = await _get_document(db, document_id, organization_id)
     
-    # In a real app, we'd use the actual extracted text from Phase 6.
-    # For now, we pass the description.
-    text_content = doc.description or ""
+    text_content = await _get_document_text(db, doc)
     
     result = await AIService.summarize_document(text_content, doc.title)
     
@@ -56,7 +55,7 @@ async def get_document_extracted_metadata(
     """Get auto-extracted metadata entities."""
     doc = await _get_document(db, document_id, organization_id)
     
-    text_content = doc.description or ""
+    text_content = await _get_document_text(db, doc)
     result = await AIService.extract_metadata(text_content)
     
     await AuditService.log_event(
@@ -83,7 +82,7 @@ async def ask_document_question(
     """Ask a question about the document."""
     doc = await _get_document(db, document_id, organization_id)
     
-    text_content = doc.description or ""
+    text_content = await _get_document_text(db, doc)
     result = await AIService.ask_document(text_content, request.question, doc.title)
     
     await AuditService.log_event(
@@ -98,6 +97,18 @@ async def ask_document_question(
     await db.commit()
     
     return result
+
+async def _get_document_text(db: AsyncSession, document: Document) -> str:
+    if not document.current_version_id:
+        return document.description or ""
+    result = await db.execute(
+        select(DocumentExtractedText)
+        .filter(DocumentExtractedText.document_version_id == document.current_version_id)
+    )
+    extracted = result.scalars().first()
+    if extracted and extracted.extracted_text:
+        return extracted.extracted_text
+    return document.description or ""
 
 async def _get_document(db: AsyncSession, document_id: UUID, organization_id: str) -> Document:
     result = await db.execute(

@@ -7,7 +7,6 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import get_current_user
 from app.database import get_db
 from app.models.auth import User, Department, Role
-from app.schemas.auth import UserProfile, DepartmentResponse, RoleResponse
 
 router = APIRouter()
 
@@ -68,7 +67,7 @@ async def get_current_user_profile(
     }
 
 from uuid import UUID
-from ..deps import get_current_organization_id
+from app.api.deps import get_current_organization_id
 
 @router.get("/users")
 async def list_users(

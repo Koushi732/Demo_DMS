@@ -3,7 +3,7 @@
 import { Check, Download, FileEdit, FileSearch, Info, Minus, Plus, ShieldCheck, Users } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { AdminService } from "@/services/adminService";
-import { DemoRole, DemoPermission } from "@/data/demo";
+import { Role } from "@/services/adminService";
 
 export default function RolesPermissionsPage() {
   const [roles, setRoles] = useState<any[]>([]);

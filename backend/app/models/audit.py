@@ -15,7 +15,7 @@ class AuditEvent(Base, UUIDMixin):
     resource_type = Column(String(50), nullable=False)  # e.g. document, workflow, user
     resource_id = Column(UUID(as_uuid=True), nullable=True)
     details = Column(Text, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    event_metadata = Column("metadata", JSONB, nullable=True)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
     timestamp = Column(DateTime(timezone=True), nullable=False, server_default="now()")

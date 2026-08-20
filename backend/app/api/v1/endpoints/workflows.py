@@ -4,16 +4,16 @@ from sqlalchemy import select
 from uuid import UUID
 from typing import Any, Dict
 
-from ...database import get_db
-from ...schemas.workflow import (
+from app.database import get_db
+from app.schemas.workflow import (
     WorkflowInstanceResponse,
     WorkflowStepInstanceResponse,
     StartWorkflowRequest,
     SubmitReviewRequest
 )
-from ...models.workflow import WorkflowTemplate
-from ...services.workflow_service import WorkflowService
-from ..deps import get_current_user, get_current_organization_id
+from app.models.workflow import WorkflowTemplate
+from app.services.workflow_service import WorkflowService
+from app.api.deps import get_current_user, get_current_organization_id
 
 router = APIRouter()
 

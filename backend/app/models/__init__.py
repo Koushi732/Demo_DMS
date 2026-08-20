@@ -4,3 +4,4 @@ from .document import Document, DocumentVersion, DocumentType, Folder, DocumentM
 from .workflow import WorkflowTemplate, WorkflowTemplateStep, WorkflowInstance, WorkflowStepInstance, WorkflowStatusEnum, WorkflowStepStatusEnum
 from .audit import AuditEvent
 from .collaboration import Notification, DocumentShare
+from .processing import DocumentProcessingJob, DocumentExtractedText

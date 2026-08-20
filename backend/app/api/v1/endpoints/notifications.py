@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import Any, Dict
 
-from ...database import get_db
-from ...schemas.collaboration import NotificationListResponse
-from ...services.notification_service import NotificationService
-from ..deps import get_current_user
+from app.database import get_db
+from app.schemas.collaboration import NotificationListResponse
+from app.services.notification_service import NotificationService
+from app.api.deps import get_current_user
 
 router = APIRouter()
 

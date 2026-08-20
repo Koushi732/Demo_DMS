@@ -100,20 +100,21 @@ export default function DocumentProcessingPage() {
             {/* Pipeline Layout */}
             <div className="relative pl-6 py-4 space-y-8 before:absolute before:inset-0 before:ml-[31px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-[2px] before:bg-surface-container-high">
               
-              {/* Steps (Simulated) */}
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(stepNum => {
-                const isCompleted = stepNum <= 4;
-                const isInProgress = stepNum === 4 && processingStatus?.status !== 'COMPLETED';
-                const isPending = stepNum > 4;
+              {/* Real Processing Steps */}
+              {processingStatus?.steps?.map((step: any, index: number) => {
+                const stepNum = index + 1;
+                const isCompleted = step.status === 'COMPLETED';
+                const isInProgress = step.status === 'PROCESSING';
+                const isPending = step.status === 'QUEUED' || !step.status;
 
                 return (
                   <div key={stepNum} className={`relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group ${isPending ? 'opacity-60' : ''}`}>
                     <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 shrink-0 z-10 -ml-4 md:ml-0 md:absolute md:left-1/2 md:-translate-x-1/2 ${
-                      isCompleted && !isInProgress ? 'border-primary bg-primary text-on-primary' :
+                      isCompleted ? 'border-primary bg-primary text-on-primary' :
                       isInProgress ? 'border-primary bg-surface-container-lowest text-primary shadow-[0_0_0_4px_rgba(15,23,42,0.1)]' :
                       'border-outline-variant border-dashed bg-surface-container-lowest text-outline-variant'
                     }`}>
-                      {isCompleted && !isInProgress ? <Check size={16} strokeWidth={3} /> :
+                      {isCompleted ? <Check size={16} strokeWidth={3} /> :
                        isInProgress ? <Loader2 size={16} className="animate-spin" /> :
                        <Database size={16} />}
                     </div>
@@ -124,13 +125,13 @@ export default function DocumentProcessingPage() {
                     }`}>
                       <div className="flex justify-between items-center mb-1">
                         <h4 className={`text-title-sm ${isInProgress ? 'text-primary' : isPending ? 'text-on-surface-variant' : 'text-on-surface'}`}>
-                          Step {stepNum}
+                          {step.name || `Step ${stepNum}`}
                         </h4>
                         <span className={`font-code-data ${isInProgress ? 'text-primary animate-pulse' : isPending ? 'text-outline-variant' : 'text-on-surface-variant'}`}>
                           {isInProgress ? 'Running...' : isPending ? 'Pending' : 'Completed'}
                         </span>
                       </div>
-                      <p className="text-body-sm text-on-surface-variant">Step details would appear here.</p>
+                      <p className="text-body-sm text-on-surface-variant">{step.progress}% Complete</p>
                     </div>
                   </div>
                 );

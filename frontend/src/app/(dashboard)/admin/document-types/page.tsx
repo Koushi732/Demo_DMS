@@ -3,10 +3,17 @@
 import { Ban, CheckCircle, Download, Edit, Filter, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AdminService } from "@/services/adminService";
-import { DemoDocumentType } from "@/data/demo";
+export interface DocumentType {
+  id: string;
+  name: string;
+  description: string;
+  prefix: string;
+  requiresTraining: boolean;
+  reviewCycleMonths: number;
+}
 
 export default function DocumentTypeManagementPage() {
-  const [docTypes, setDocTypes] = useState<DemoDocumentType[]>([]);
+  const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

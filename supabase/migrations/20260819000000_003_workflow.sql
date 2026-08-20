@@ -2,6 +2,15 @@
 CREATE TYPE workflow_status AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
 CREATE TYPE workflow_step_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
+-- Create trigger function
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- Workflow Templates
 CREATE TABLE workflow_templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

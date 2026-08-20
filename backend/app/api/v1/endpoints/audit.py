@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import Any, Dict, Optional
 
-from ...database import get_db
-from ...schemas.audit import AuditEventResponse, AuditEventListResponse
-from ...services.audit_service import AuditService
-from ..deps import get_current_user, get_current_organization_id
+from app.database import get_db
+from app.schemas.audit import AuditEventResponse, AuditEventListResponse
+from app.services.audit_service import AuditService
+from app.api.deps import get_current_user, get_current_organization_id
 
 router = APIRouter()
 

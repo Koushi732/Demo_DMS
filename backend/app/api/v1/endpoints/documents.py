@@ -3,11 +3,11 @@ Documents API — Phase 3 Core DMS
 Implements CRUD endpoints for the document repository.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Form, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, asc
 from sqlalchemy.orm import selectinload
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 import uuid
 import logging
@@ -178,7 +178,7 @@ async def list_documents(
         page=page,
         page_size=page_size,
     )
-from ...services.processing_service import ProcessingService
+from app.services.processing_service import ProcessingService
 
 @router.get("/{document_id}/processing")
 async def get_processing_status(
@@ -188,7 +188,77 @@ async def get_processing_status(
     organization_id: str = Depends(get_current_organization_id),
 ) -> Any:
     """Get document processing status."""
-    return await ProcessingService.get_processing_status(document_id)
+    return await ProcessingService.get_processing_status(db, document_id)
+
+
+# ─── GET /documents/types ───────────────────────────────────────
+@router.get("/types", response_model=List[DocumentTypeResponse])
+async def list_document_types(
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all active document types for the organization."""
+    stmt = (
+        select(DocumentType)
+        .where(DocumentType.organization_id == org_id, DocumentType.is_active == True)
+        .order_by(DocumentType.name)
+    )
+    result = await db.execute(stmt)
+    types = result.scalars().all()
+    return [DocumentTypeResponse.model_validate(t) for t in types]
+
+
+# ─── Folders ─────────────────────────────────────────────────────
+@router.get("/folders", response_model=List[FolderResponse])
+async def list_folders(
+    parent_id: Optional[UUID] = None,
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """List folders (root level if no parent_id)."""
+    stmt = select(Folder).where(Folder.organization_id == org_id)
+    if parent_id:
+        stmt = stmt.where(Folder.parent_id == parent_id)
+    else:
+        stmt = stmt.where(Folder.parent_id.is_(None))
+    stmt = stmt.order_by(Folder.name)
+
+    result = await db.execute(stmt)
+    folders = result.scalars().all()
+    return [FolderResponse.model_validate(f) for f in folders]
+
+
+@router.post("/folders", response_model=FolderResponse, status_code=status.HTTP_201_CREATED)
+async def create_folder(
+    body: FolderCreate,
+    user_claims: dict = Depends(get_current_user),
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a new folder."""
+    user_id = user_claims.get("sub")
+
+    # Build materialized path
+    path = f"/{body.name}"
+    if body.parent_id:
+        parent = await db.get(Folder, body.parent_id)
+        if not parent or str(parent.organization_id) != org_id:
+            raise HTTPException(status_code=404, detail="Parent folder not found")
+        path = f"{parent.path}/{body.name}"
+
+    folder = Folder(
+        id=uuid.uuid4(),
+        organization_id=UUID(org_id),
+        parent_id=body.parent_id,
+        name=body.name,
+        path=path,
+        created_by=UUID(user_id),
+    )
+    db.add(folder)
+    await db.commit()
+    await db.refresh(folder)
+
+    return FolderResponse.model_validate(folder)
 
 
 # ─── GET /documents/stats ───────────────────────────────────────
@@ -428,76 +498,6 @@ async def list_document_versions(
     return [DocumentVersionResponse.model_validate(v) for v in versions]
 
 
-# ─── GET /documents/types ───────────────────────────────────────
-@router.get("/types", response_model=List[DocumentTypeResponse])
-async def list_document_types(
-    org_id: str = Depends(get_current_organization_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """List all active document types for the organization."""
-    stmt = (
-        select(DocumentType)
-        .where(DocumentType.organization_id == org_id, DocumentType.is_active == True)
-        .order_by(DocumentType.name)
-    )
-    result = await db.execute(stmt)
-    types = result.scalars().all()
-    return [DocumentTypeResponse.model_validate(t) for t in types]
-
-
-# ─── Folders ─────────────────────────────────────────────────────
-@router.get("/folders", response_model=List[FolderResponse])
-async def list_folders(
-    parent_id: Optional[UUID] = None,
-    org_id: str = Depends(get_current_organization_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """List folders (root level if no parent_id)."""
-    stmt = select(Folder).where(Folder.organization_id == org_id)
-    if parent_id:
-        stmt = stmt.where(Folder.parent_id == parent_id)
-    else:
-        stmt = stmt.where(Folder.parent_id.is_(None))
-    stmt = stmt.order_by(Folder.name)
-
-    result = await db.execute(stmt)
-    folders = result.scalars().all()
-    return [FolderResponse.model_validate(f) for f in folders]
-
-
-@router.post("/folders", response_model=FolderResponse, status_code=status.HTTP_201_CREATED)
-async def create_folder(
-    body: FolderCreate,
-    user_claims: dict = Depends(get_current_user),
-    org_id: str = Depends(get_current_organization_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """Create a new folder."""
-    user_id = user_claims.get("sub")
-
-    # Build materialized path
-    path = f"/{body.name}"
-    if body.parent_id:
-        parent = await db.get(Folder, body.parent_id)
-        if not parent or str(parent.organization_id) != org_id:
-            raise HTTPException(status_code=404, detail="Parent folder not found")
-        path = f"{parent.path}/{body.name}"
-
-    folder = Folder(
-        id=uuid.uuid4(),
-        organization_id=UUID(org_id),
-        parent_id=body.parent_id,
-        name=body.name,
-        path=path,
-        created_by=UUID(user_id),
-    )
-    db.add(folder)
-    await db.commit()
-    await db.refresh(folder)
-
-    return FolderResponse.model_validate(folder)
-
-
 # ─── POST /documents/{id}/versions (Upload) ─────────────────────
 @router.post("/{document_id}/versions", response_model=DocumentUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document_version(
@@ -508,6 +508,7 @@ async def upload_document_version(
     org_id: str = Depends(get_current_organization_id),
     supabase = Depends(get_supabase_client),
     db: AsyncSession = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks()
 ):
     """Upload a file to create a new version of the document."""
     doc = await db.get(Document, document_id)
@@ -528,6 +529,15 @@ async def upload_document_version(
         resource_type="DOCUMENT_VERSION",
         resource_id=version.id,
         details=f"Uploaded new version for document {doc.document_number}"
+    )
+
+    # Trigger background processing
+    from app.services.processing_service import ProcessingService
+    background_tasks.add_task(
+        ProcessingService.process_document_version_task,
+        supabase=supabase,
+        document_id=doc.id,
+        version_id=version.id
     )
 
     return DocumentUploadResponse(

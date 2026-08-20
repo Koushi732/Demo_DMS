@@ -76,15 +76,29 @@ async def process_document_upload(
         created_by=uuid.UUID(user_id)
     )
     
-    db.add(version)
-    
-    # 5. Update Document
-    document.current_version_id = version.id
-    # Reset processing status for new upload
-    document.processing_status = "UPLOADED"
-    
-    await db.commit()
-    await db.refresh(version)
+    try:
+        db.add(version)
+        await db.flush()
+        
+        # 5. Update Document
+        document.current_version_id = version.id
+        # Reset processing status for new upload
+        document.processing_status = "UPLOADED"
+        
+        await db.commit()
+        await db.refresh(version)
+    except Exception as e:
+        await db.rollback()
+        # Clean up storage to prevent orphans
+        try:
+            supabase.storage.from_(settings.storage_bucket).remove([storage_path])
+        except Exception as cleanup_e:
+            print(f"Failed to cleanup storage after DB error: {cleanup_e}")
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save document version: {str(e)}"
+        )
     
     return version
 
