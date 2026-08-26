@@ -98,6 +98,11 @@ export default function NotificationCenterPage() {
                     </span>
                   </div>
                   <p className="text-body-md text-on-surface-variant mb-[8px] line-clamp-2">{notif.message}</p>
+                  {notif.link && (
+                    <a href={notif.link} onClick={e => e.stopPropagation()} className="inline-flex mt-2 items-center gap-1 text-sm font-medium text-primary hover:underline">
+                      View Details &rarr;
+                    </a>
+                  )}
                 </div>
               </div>
             ))

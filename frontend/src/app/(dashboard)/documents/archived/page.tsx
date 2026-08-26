@@ -31,6 +31,25 @@ export default function ArchivedDocumentsPage() {
     load();
   }, []);
   
+  const handleExport = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + "Document Number,Title,Status\n" + archivedDocs.map(d => `${d.document_number},"${d.title.replace(/"/g, '""')}",${d.status}`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "archived_documents.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const handleFilter = () => {
+    alert("Advanced Filter modal would open here");
+  };
+  
+  const handleViewHistory = (docId: string) => {
+    alert(`Viewing history for document ID: ${docId}`);
+  };
+  
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-surface">
       
@@ -44,11 +63,11 @@ export default function ArchivedDocumentsPage() {
           <h2 className="text-display-lg text-on-surface">Superseded &amp; Obsolete Records</h2>
         </div>
         <div className="flex gap-[12px]">
-          <button className="h-9 px-[16px] border border-outline-variant rounded text-title-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-[8px]">
+          <button onClick={handleFilter} className="h-9 px-[16px] border border-outline-variant rounded text-title-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-[8px]">
             <Filter size={18} />
             Filter
           </button>
-          <button className="h-9 px-[16px] bg-primary text-on-primary rounded text-title-sm hover:opacity-90 transition-opacity flex items-center gap-[8px]">
+          <button onClick={handleExport} className="h-9 px-[16px] bg-primary text-on-primary rounded text-title-sm hover:opacity-90 transition-opacity flex items-center gap-[8px]">
             <Download size={18} />
             Export Log
           </button>
@@ -143,7 +162,7 @@ export default function ArchivedDocumentsPage() {
                         {doc.owner_id ? doc.owner_id.substring(0,8) : "Unknown"}
                       </td>
                       <td className="py-[12px] px-[16px] text-right">
-                        <button className="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); handleViewHistory(doc.id); }} title="View History" className="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                           <MoreVertical size={20} />
                         </button>
                       </td>

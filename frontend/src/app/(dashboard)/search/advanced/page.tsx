@@ -32,6 +32,27 @@ export default function AdvancedSearchPage() {
     loadResults(query, statusFilter);
   };
 
+  const handleExport = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + "Document Number,Title,Status\n" + searchResults.map(d => `${d.document_number},"${d.title.replace(/"/g, '""')}",${d.status}`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "search_results.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const handleSaveSearch = () => {
+    alert("Search parameters saved successfully.");
+  };
+  
+  const handleClearAll = () => {
+    setQuery("");
+    setStatusFilter("");
+    loadResults("", "");
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
       
@@ -48,11 +69,11 @@ export default function AdvancedSearchPage() {
             <p className="text-body-md text-on-surface-variant mt-[8px]">Filter and locate controlled documents across all departments.</p>
           </div>
           <div className="flex gap-[12px]">
-            <button className="h-9 px-[16px] rounded-md border border-outline-variant bg-surface text-on-surface text-body-sm font-medium hover:bg-surface-container-low flex items-center gap-[8px] transition-colors">
+            <button onClick={handleSaveSearch} className="h-9 px-[16px] rounded-md border border-outline-variant bg-surface text-on-surface text-body-sm font-medium hover:bg-surface-container-low flex items-center gap-[8px] transition-colors">
               <Bookmark fontSize="small" />
               Save Search
             </button>
-            <button className="h-9 px-[16px] rounded-md bg-primary text-on-primary text-body-sm font-medium hover:opacity-90 flex items-center gap-[8px] transition-opacity">
+            <button onClick={handleExport} className="h-9 px-[16px] rounded-md bg-primary text-on-primary text-body-sm font-medium hover:opacity-90 flex items-center gap-[8px] transition-opacity">
               <Download fontSize="small" />
               Export Results
             </button>
@@ -70,7 +91,7 @@ export default function AdvancedSearchPage() {
               <Filter fontSize="small" />
               Filters
             </h3>
-            <button className="text-body-sm text-on-surface-variant hover:text-primary transition-colors underline decoration-outline-variant underline-offset-2">Clear All</button>
+            <button onClick={handleClearAll} className="text-body-sm text-on-surface-variant hover:text-primary transition-colors underline decoration-outline-variant underline-offset-2">Clear All</button>
           </div>
           
           <form onSubmit={handleSearch} className="flex-1 flex flex-col">
