@@ -176,7 +176,6 @@ export default function RolesPermissionsPage() {
           </div>
         </div>
         </div>
-      </div>
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-surface-container-lowest rounded-lg shadow-lg w-full max-w-md flex flex-col">

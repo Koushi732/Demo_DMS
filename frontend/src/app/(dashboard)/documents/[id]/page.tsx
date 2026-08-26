@@ -11,7 +11,6 @@ import {
   History, 
   Building2,
   BrainCircuit,
-  BrainCircuit,
   AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";

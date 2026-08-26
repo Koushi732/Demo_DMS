@@ -2,16 +2,7 @@
 
 import { Ban, CheckCircle, Download, Edit, Filter, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { AdminService } from "@/services/adminService";
-export interface DocumentType {
-  id: string;
-  name: string;
-  description?: string;
-  prefix: string;
-  category?: string;
-  requiresTraining?: boolean;
-  reviewCycleMonths?: number;
-}
+import { AdminService, DocumentType } from "@/services/adminService";
 
 export default function DocumentTypeManagementPage() {
   const [docTypes, setDocTypes] = useState<DocumentType[]>([]);

@@ -66,10 +66,11 @@ export const apiClient = {
         let errorData: unknown = null;
         try {
           errorData = await response.json();
-          if (errorData.detail) {
-            errorMessage = typeof errorData.detail === 'string' 
-              ? errorData.detail 
-              : JSON.stringify(errorData.detail);
+          if (errorData && typeof errorData === 'object' && 'detail' in errorData) {
+            const detail = (errorData as Record<string, unknown>).detail;
+            errorMessage = typeof detail === 'string' 
+              ? detail 
+              : JSON.stringify(detail);
           }
         } catch (_) {
           // Response is not JSON

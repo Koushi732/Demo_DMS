@@ -29,7 +29,7 @@ function SearchContent() {
     const fetchSearch = async () => {
       setLoading(true);
       try {
-        const response = await DocumentService.searchDocuments({ q, page: 1, page_size: 50 });
+        const response = await DocumentService.searchDocuments({ search: q, page: 1, page_size: 50 });
         setSearchResults(response.items);
         setTotal(response.total);
       } catch (error) {

@@ -7,7 +7,6 @@ import {
   Brain, 
   Database, 
   Search as SearchIcon, 
-  Search as SearchIcon, 
   FileText
 } from "lucide-react";
 import { useParams } from "next/navigation";

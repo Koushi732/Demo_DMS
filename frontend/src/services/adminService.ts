@@ -50,6 +50,8 @@ export interface DocumentType {
   prefix: string;
   category: string;
   description?: string;
+  requiresTraining?: boolean;
+  reviewCycleMonths?: number;
 }
 
 export const AdminService = {
