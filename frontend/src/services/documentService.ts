@@ -110,16 +110,28 @@ export const DocumentService = {
     return apiClient.get<DocumentResponse>(`/documents/${id}`);
   },
 
+  async updateDocument(id: string, data: Partial<DocumentResponse>): Promise<DocumentResponse> {
+    return apiClient.patch<DocumentResponse>(`/documents/${id}`, data);
+  },
+
+  async archiveDocument(id: string): Promise<void> {
+    return apiClient.delete<void>(`/documents/${id}`);
+  },
+
   async createDocument(data: Record<string, unknown>): Promise<DocumentResponse> {
     return apiClient.post<DocumentResponse>('/documents', data);
   },
 
-  async updateDocument(id: string, data: Record<string, unknown>): Promise<DocumentResponse> {
-    return apiClient.patch<DocumentResponse>(`/documents/${id}`, data);
+  async createRevision(id: string): Promise<DocumentResponse> {
+    return apiClient.post<DocumentResponse>(`/documents/${id}/revision`);
   },
 
-  async deleteDocument(id: string): Promise<void> {
-    return apiClient.delete<void>(`/documents/${id}`);
+  async continueVersion(id: string): Promise<DocumentResponse> {
+    return apiClient.post<DocumentResponse>(`/documents/${id}/continue`);
+  },
+
+  async markObsolete(id: string): Promise<DocumentResponse> {
+    return apiClient.post<DocumentResponse>(`/documents/${id}/obsolete`);
   },
 
   async uploadVersion(id: string, file: File, changeReason?: string): Promise<{ version: DocumentVersion; preview_url: string }> {
@@ -166,14 +178,14 @@ export const DocumentService = {
   },
 
   async searchDocuments(params: {
-    q: string;
+    search?: string;
     page?: number;
     page_size?: number;
     status?: string;
     department_id?: string;
     document_type_id?: string;
   }): Promise<DocumentListResponse> {
-    return apiClient.get<DocumentListResponse>('/documents/search', { params });
+    return apiClient.get<DocumentListResponse>('/documents', { params });
   },
 
   async getSummary(documentId: string): Promise<{ summary: string }> {

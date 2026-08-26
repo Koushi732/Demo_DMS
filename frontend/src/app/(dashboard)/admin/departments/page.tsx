@@ -9,23 +9,45 @@ export default function DepartmentManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [depts, allUsers] = await Promise.all([
-          AdminService.getDepartments(),
-          AdminService.getUsers()
-        ]);
-        setDepartments(depts);
-        setUsers(allUsers);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: "", description: "" });
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [depts, allUsers] = await Promise.all([
+        AdminService.getDepartments(),
+        AdminService.getUsers()
+      ]);
+      setDepartments(depts);
+      setUsers(allUsers);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     load();
   }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await AdminService.createDepartment(formData);
+      setIsModalOpen(false);
+      setFormData({ name: "", description: "" });
+      await load();
+    } catch (err) {
+      console.error("Failed to create department", err);
+      alert("Failed to create department");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-[24px] bg-surface">
@@ -37,7 +59,7 @@ export default function DepartmentManagementPage() {
             <h2 className="text-headline-md text-on-surface">Department Management</h2>
             <p className="text-body-sm text-on-surface-variant mt-[4px]">Manage organizational units, oversight assignments, and compliance metrics.</p>
           </div>
-          <button className="bg-primary text-on-primary hover:bg-inverse-surface transition-colors flex items-center gap-[4px] px-[16px] py-[10px] rounded text-label-caps shadow-sm shrink-0">
+          <button onClick={() => setIsModalOpen(true)} className="bg-primary text-on-primary hover:bg-inverse-surface transition-colors flex items-center gap-[4px] px-[16px] py-[10px] rounded text-label-caps shadow-sm shrink-0">
             <Plus size={18} />
             ADD DEPARTMENT
           </button>
@@ -85,6 +107,34 @@ export default function DepartmentManagementPage() {
           
         </div>
       </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface-container-lowest rounded-lg shadow-lg w-full max-w-md flex flex-col">
+            <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+              <h2 className="text-title-lg font-semibold text-on-surface">New Department</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleCreate} className="flex flex-col p-6 gap-4">
+              <div>
+                <label className="block text-label-caps text-on-surface-variant mb-1">Name *</label>
+                <input required type="text" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Quality Assurance" />
+              </div>
+              <div>
+                <label className="block text-label-caps text-on-surface-variant mb-1">Description</label>
+                <textarea className="w-full p-3 rounded border border-outline-variant bg-surface resize-none" rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded text-body-sm text-on-surface hover:bg-surface-container-low transition-colors border border-outline-variant">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded text-body-sm text-on-primary bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {isSubmitting ? "Saving..." : "Create Department"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

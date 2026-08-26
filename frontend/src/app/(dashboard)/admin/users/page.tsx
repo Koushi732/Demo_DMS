@@ -9,19 +9,43 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await AdminService.getUsers();
-        setUsers(data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "", lastName: "", email: "", position: "", departmentId: ""
+  });
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await AdminService.getUsers();
+      setUsers(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     load();
   }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      alert("User invited successfully! (Mock)");
+      setIsModalOpen(false);
+      setFormData({ firstName: "", lastName: "", email: "", position: "", departmentId: "" });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex-1 overflow-auto bg-background p-[24px] sm:p-[40px]">
@@ -33,7 +57,7 @@ export default function UserManagementPage() {
             <h2 className="text-display-lg text-on-surface">User Management</h2>
             <p className="text-body-md text-on-surface-variant mt-[8px]">Manage system access, roles, and department assignments for Aureon personnel.</p>
           </div>
-          <button className="h-9 px-[16px] bg-primary text-on-primary rounded text-title-sm flex items-center gap-[8px] hover:bg-primary/90 transition-colors">
+          <button onClick={() => setIsModalOpen(true)} className="h-9 px-[16px] bg-primary text-on-primary rounded text-title-sm flex items-center gap-[8px] hover:bg-primary/90 transition-colors">
             <UserPlus size={18} />
             Add User
           </button>
@@ -165,6 +189,40 @@ export default function UserManagementPage() {
           
         </div>
       </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface-container-lowest rounded-lg shadow-lg w-full max-w-md flex flex-col">
+            <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+              <h2 className="text-title-lg font-semibold text-on-surface">Add User</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleCreate} className="flex flex-col p-6 gap-4">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-label-caps text-on-surface-variant mb-1">First Name *</label>
+                  <input required type="text" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-label-caps text-on-surface-variant mb-1">Last Name *</label>
+                  <input required type="text" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-label-caps text-on-surface-variant mb-1">Email *</label>
+                <input required type="email" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded text-body-sm text-on-surface hover:bg-surface-container-low transition-colors border border-outline-variant">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded text-body-sm text-on-primary bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {isSubmitting ? "Inviting..." : "Invite User"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

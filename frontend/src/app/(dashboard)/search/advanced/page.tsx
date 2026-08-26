@@ -8,11 +8,12 @@ export default function AdvancedSearchPage() {
   const [searchResults, setSearchResults] = useState<DocumentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
 
-  const loadResults = async (q: string = "") => {
+  const loadResults = async (q: string = "", stat: string = "") => {
     setLoading(true);
     try {
-      const data = await DocumentService.searchDocuments({ q });
+      const data = await DocumentService.searchDocuments({ search: q, status: stat || undefined });
       setSearchResults(data.items);
     } catch (e) {
       console.error(e);
@@ -28,7 +29,7 @@ export default function AdvancedSearchPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    loadResults(query);
+    loadResults(query, statusFilter);
   };
 
   return (
@@ -116,10 +117,10 @@ export default function AdvancedSearchPage() {
               <div>
                 <label className="block text-label-caps text-on-surface-variant mb-[8px]">STATUS</label>
                 <div className="flex flex-wrap gap-[8px]">
-                  <button type="button" className="px-[12px] py-[6px] rounded-full border border-primary bg-primary-fixed text-on-primary-fixed text-body-sm font-medium hover:bg-primary-fixed-dim transition-colors">Effective</button>
-                  <button type="button" className="px-[12px] py-[6px] rounded-full border border-outline-variant bg-surface text-on-surface-variant text-body-sm hover:bg-surface-container-low transition-colors">Draft</button>
-                  <button type="button" className="px-[12px] py-[6px] rounded-full border border-outline-variant bg-surface text-on-surface-variant text-body-sm hover:bg-surface-container-low transition-colors">In Review</button>
-                  <button type="button" className="px-[12px] py-[6px] rounded-full border border-outline-variant bg-surface text-on-surface-variant text-body-sm hover:bg-surface-container-low transition-colors">Obsolete</button>
+                  <button type="button" onClick={() => setStatusFilter(statusFilter === 'EFFECTIVE' ? '' : 'EFFECTIVE')} className={`px-[12px] py-[6px] rounded-full text-body-sm transition-colors ${statusFilter === 'EFFECTIVE' ? 'border border-primary bg-primary-fixed text-on-primary-fixed font-medium hover:bg-primary-fixed-dim' : 'border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container-low'}`}>Effective</button>
+                  <button type="button" onClick={() => setStatusFilter(statusFilter === 'DRAFT' ? '' : 'DRAFT')} className={`px-[12px] py-[6px] rounded-full text-body-sm transition-colors ${statusFilter === 'DRAFT' ? 'border border-primary bg-primary-fixed text-on-primary-fixed font-medium hover:bg-primary-fixed-dim' : 'border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container-low'}`}>Draft</button>
+                  <button type="button" onClick={() => setStatusFilter(statusFilter === 'UNDER_REVIEW' ? '' : 'UNDER_REVIEW')} className={`px-[12px] py-[6px] rounded-full text-body-sm transition-colors ${statusFilter === 'UNDER_REVIEW' ? 'border border-primary bg-primary-fixed text-on-primary-fixed font-medium hover:bg-primary-fixed-dim' : 'border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container-low'}`}>In Review</button>
+                  <button type="button" onClick={() => setStatusFilter(statusFilter === 'OBSOLETE' ? '' : 'OBSOLETE')} className={`px-[12px] py-[6px] rounded-full text-body-sm transition-colors ${statusFilter === 'OBSOLETE' ? 'border border-primary bg-primary-fixed text-on-primary-fixed font-medium hover:bg-primary-fixed-dim' : 'border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container-low'}`}>Obsolete</button>
                 </div>
               </div>
               

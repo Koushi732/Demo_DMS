@@ -65,6 +65,10 @@ export const AdminService = {
     return apiClient.get<DocumentType[]>('/documents/types');
   },
 
+  async createDocumentType(data: Partial<DocumentType>): Promise<DocumentType> {
+    return apiClient.post<DocumentType>('/documents/types', data);
+  },
+
   async getSystemSettings(): Promise<SystemSettings> {
     return apiClient.get<SystemSettings>('/dashboard/settings');
   },
@@ -81,7 +85,15 @@ export const AdminService = {
     return apiClient.get<Department[]>('/auth/departments');
   },
 
+  async createDepartment(data: Partial<Department>): Promise<Department> {
+    return apiClient.post<Department>('/auth/departments', data);
+  },
+
   async getWorkflowTemplates(): Promise<WorkflowTemplate[]> {
     return apiClient.get<WorkflowTemplate[]>('/templates');
+  },
+
+  async createRole(data: Partial<Role>): Promise<Role> {
+    return apiClient.post<Role>('/auth/roles', data);
   }
 };

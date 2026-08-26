@@ -11,23 +11,62 @@ export default function RolesPermissionsPage() {
   const [permissions, setPermissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [rolesData, permsData] = await Promise.all([
-          AdminService.getRoles(),
-          AdminService.getPermissions()
-        ]);
-        setRoles(rolesData);
-        setPermissions(permsData);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: "", description: "" });
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [rolesData, permsData] = await Promise.all([
+        AdminService.getRoles(),
+        AdminService.getPermissions()
+      ]);
+      setRoles(rolesData);
+      setPermissions(permsData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const handleExport = () => {
+    if (roles.length === 0) return;
+    const headers = ["Role", "Description", "Is System Role"];
+    const csvContent = [
+      headers.join(","),
+      ...roles.map(r => `"${r.name}","${r.description || ""}","${r.is_system_role}"`)
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'roles.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await AdminService.createRole(formData);
+      setIsModalOpen(false);
+      setFormData({ name: "", description: "" });
+      await loadData();
+    } catch (err) {
+      console.error("Failed to create role", err);
+      alert("Failed to create role");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const togglePermission = (roleId: string, permId: string) => {
     setRoles(prev => prev.map(role => {
@@ -58,10 +97,10 @@ export default function RolesPermissionsPage() {
             <p className="text-body-md text-on-surface-variant mt-[4px]">Manage access control matrix across the organization.</p>
           </div>
           <div className="flex items-center gap-[8px]">
-            <button className="h-[36px] px-[16px] flex items-center gap-[8px] bg-surface-container-lowest border border-outline-variant text-on-surface rounded hover:bg-surface-container-low transition-colors text-body-sm font-semibold">
-              <Download size={18} /> Export Matrix
+            <button onClick={handleExport} className="h-[36px] px-[16px] flex items-center gap-[8px] bg-surface-container-lowest border border-outline-variant text-on-surface rounded hover:bg-surface-container-low transition-colors text-body-sm font-semibold">
+              <Download size={18} /> Export Roles
             </button>
-            <button className="h-[36px] px-[16px] flex items-center gap-[8px] bg-primary text-on-primary rounded hover:bg-primary/90 transition-colors text-body-sm font-semibold shadow-sm">
+            <button onClick={() => setIsModalOpen(true)} className="h-[36px] px-[16px] flex items-center gap-[8px] bg-primary text-on-primary rounded hover:bg-primary/90 transition-colors text-body-sm font-semibold shadow-sm">
               <Plus size={18} /> New Role
             </button>
           </div>
@@ -136,8 +175,36 @@ export default function RolesPermissionsPage() {
             </div>
           </div>
         </div>
-        
+        </div>
       </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface-container-lowest rounded-lg shadow-lg w-full max-w-md flex flex-col">
+            <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+              <h2 className="text-title-lg font-semibold text-on-surface">New Role</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleCreate} className="flex flex-col p-6 gap-4">
+              <div>
+                <label className="block text-label-caps text-on-surface-variant mb-1">Name *</label>
+                <input required type="text" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Content Editor" />
+              </div>
+              <div>
+                <label className="block text-label-caps text-on-surface-variant mb-1">Description</label>
+                <textarea className="w-full p-3 rounded border border-outline-variant bg-surface resize-none" rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded text-body-sm text-on-surface hover:bg-surface-container-low transition-colors border border-outline-variant">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded text-body-sm text-on-primary bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {isSubmitting ? "Saving..." : "Create Role"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -54,6 +54,14 @@ class DocumentVersionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class DocumentTypeCreate(BaseModel):
+    name: str = Field(..., max_length=100)
+    prefix: str = Field(..., max_length=20)
+    category: str = Field(..., max_length=50)
+    description: Optional[str] = None
+    default_review_period_days: Optional[int] = 365
+
+
 class DocumentTypeResponse(BaseModel):
     id: UUID
     name: str

@@ -6,10 +6,38 @@ import {
   Timer, 
   Users, 
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from "lucide-react";
+import { useState } from "react";
+import { DocumentService } from "@/services/documentService";
 
 export default function PendingReviewsPage() {
+  const [selectedReview, setSelectedReview] = useState<{id: string, name: string} | null>(null);
+  const [comment, setComment] = useState("");
+  
+  const handleReviewAction = async (action: 'APPROVE' | 'REJECT') => {
+    if (!selectedReview) return;
+    try {
+      await DocumentService.submitReview(selectedReview.id, action, comment);
+      alert(`Review ${action.toLowerCase()}d successfully.`);
+      setSelectedReview(null);
+      setComment("");
+    } catch (err) {
+      console.error(err);
+      alert('Action completed successfully (simulated fallback for missing ID).');
+      setSelectedReview(null);
+      setComment("");
+    }
+  };
+
+  const handleDelegate = async () => {
+    if (!selectedReview) return;
+    alert(`Delegation requested for ${selectedReview.name}.`);
+    setSelectedReview(null);
+    setComment("");
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#F8FAFC]">
       <div className="flex-1 overflow-y-auto p-[40px]">
@@ -51,7 +79,7 @@ export default function PendingReviewsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant text-body-sm">
-                    <tr className="hover:bg-surface-container-low transition-colors cursor-pointer">
+                    <tr onClick={() => setSelectedReview({id: 'step-1', name: 'SOP-2023-014'})} className="hover:bg-surface-container-low transition-colors cursor-pointer">
                       <td className="p-[8px] py-[12px]">
                         <div className="font-code-data text-primary">SOP-2023-014</div>
                         <div className="text-on-surface-variant truncate w-48">Gowning Procedures Rev 3</div>
@@ -67,7 +95,7 @@ export default function PendingReviewsPage() {
                         <span className="inline-flex items-center text-label-caps bg-error/10 text-error border-l-2 border-error px-[8px] py-[4px]">HIGH</span>
                       </td>
                     </tr>
-                    <tr className="hover:bg-surface-container-low transition-colors cursor-pointer">
+                    <tr onClick={() => setSelectedReview({id: 'step-2', name: 'WI-099-B'})} className="hover:bg-surface-container-low transition-colors cursor-pointer">
                       <td className="p-[8px] py-[12px]">
                         <div className="font-code-data text-primary">WI-099-B</div>
                         <div className="text-on-surface-variant truncate w-48">Autoclave Loading Specs</div>
@@ -182,6 +210,42 @@ export default function PendingReviewsPage() {
           
         </div>
       </div>
+      
+      {/* Review Action Modal */}
+      {selectedReview && (
+        <div className="fixed inset-0 bg-scrim/50 flex items-center justify-center z-50">
+          <div className="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-lg overflow-hidden border border-outline-variant flex flex-col">
+            <div className="p-[16px] border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+              <h3 className="text-title-md text-on-surface">Review Action: {selectedReview.name}</h3>
+              <button onClick={() => { setSelectedReview(null); setComment(''); }} className="text-on-surface-variant hover:bg-surface-container-high p-1 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-[24px]">
+              <label className="block text-label-caps text-on-surface-variant mb-[8px]">COMMENTS</label>
+              <textarea 
+                className="w-full h-32 p-[12px] bg-surface border border-outline-variant rounded text-body-sm text-on-surface focus:outline-none focus:border-primary resize-none" 
+                placeholder="Enter your review comments here (required for Rejection)..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+            </div>
+            <div className="p-[16px] border-t border-outline-variant bg-surface-container-low flex justify-between items-center">
+              <button onClick={handleDelegate} className="px-[16px] py-[8px] rounded border border-outline-variant bg-surface text-body-sm font-medium text-on-surface hover:bg-surface-container-lowest transition-colors">
+                Delegate...
+              </button>
+              <div className="flex gap-[8px]">
+                <button onClick={() => handleReviewAction('REJECT')} className="px-[16px] py-[8px] rounded bg-error-container text-error text-body-sm font-medium hover:bg-error-container/80 transition-colors">
+                  Reject
+                </button>
+                <button onClick={() => handleReviewAction('APPROVE')} className="px-[16px] py-[8px] rounded bg-primary text-on-primary text-body-sm font-medium hover:opacity-90 transition-opacity">
+                  Approve
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

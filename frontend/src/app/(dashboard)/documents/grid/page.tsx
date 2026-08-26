@@ -11,7 +11,8 @@ import {
   Upload,
   X,
   MoreVertical,
-  FileText
+  FileText,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge, StatusVariant } from "@/components/ui/StatusBadge";
@@ -22,6 +23,38 @@ export default function DocumentGridPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const handleExport = () => {
+    if (documents.length === 0) return;
+    const headers = ["Title", "Document Number", "Status", "Version"];
+    const csvContent = [
+      headers.join(","),
+      ...documents.map(d => `"${d.title}","${d.document_number}","${d.status}","${d.current_version?.version_number || '1.0'}"`)
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'documents.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleArchive = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to archive this document?")) return;
+    try {
+      await DocumentService.archiveDocument(id);
+      setDocuments(prev => prev.filter(d => d.id !== id));
+      setOpenMenuId(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to archive document");
+    }
+  };
 
   useEffect(() => {
     async function loadDocs() {
@@ -104,6 +137,10 @@ export default function DocumentGridPage() {
           </div>
 
           <div className="flex items-center gap-[8px]">
+            <Button onClick={handleExport} variant="outline" className="h-[36px] gap-[8px]">
+              <Download size={18} />
+              Export
+            </Button>
             <Button variant="outline" className="h-[36px] gap-[8px]">
               <FolderPlus size={18} />
               New Folder
@@ -153,10 +190,16 @@ export default function DocumentGridPage() {
                 {/* Card Header (Thumbnail placeholder) */}
                 <div className="h-[140px] bg-surface-container-low border-b border-outline-variant rounded-t-lg flex items-center justify-center text-outline-variant relative">
                   <FileText size={48} />
-                  <div className="absolute top-2 right-2">
-                    <button className="p-1 rounded-full bg-surface-container-lowest/80 text-on-surface-variant hover:bg-surface-container-lowest opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.preventDefault()}>
+                  <div className="absolute top-2 right-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <button className="p-1 rounded-full bg-surface-container-lowest/80 text-on-surface-variant hover:bg-surface-container-lowest transition-opacity" onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)}>
                       <MoreVertical size={16} />
                     </button>
+                    {openMenuId === doc.id && (
+                      <div className="absolute top-full right-0 mt-1 w-32 bg-surface-container-lowest border border-outline-variant shadow-lg rounded py-1 z-50">
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href=`/documents/${doc.id}/metadata`}} className="w-full text-left px-3 py-1.5 hover:bg-surface-container-low text-body-sm text-on-surface">Edit Metadata</button>
+                        <button onClick={(e) => handleArchive(e, doc.id)} className="w-full text-left px-3 py-1.5 hover:bg-error-container text-body-sm text-error">Archive</button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 

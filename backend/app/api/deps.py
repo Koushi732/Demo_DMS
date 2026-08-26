@@ -27,8 +27,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
     token = credentials.credentials
     try:
-        # Use Supabase service role client to verify the token
-        supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        # Use Supabase anon client to verify the token, since the token belongs to the user
+        supabase = create_client(settings.supabase_url, settings.supabase_anon_key)
         user_response = supabase.auth.get_user(token)
 
         if not user_response or not user_response.user:

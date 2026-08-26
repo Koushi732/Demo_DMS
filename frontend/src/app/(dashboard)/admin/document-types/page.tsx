@@ -6,29 +6,73 @@ import { AdminService } from "@/services/adminService";
 export interface DocumentType {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   prefix: string;
-  requiresTraining: boolean;
-  reviewCycleMonths: number;
+  category?: string;
+  requiresTraining?: boolean;
+  reviewCycleMonths?: number;
 }
 
 export default function DocumentTypeManagementPage() {
   const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    prefix: "",
+    category: "",
+    description: "",
+  });
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const types = await AdminService.getDocumentTypes();
+      setDocTypes(types as DocumentType[]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const types = await AdminService.getDocumentTypes();
-        setDocTypes(types);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
     loadData();
   }, []);
+
+  const handleExport = () => {
+    if (docTypes.length === 0) return;
+    const headers = ["Document Type", "Code", "Category", "Description"];
+    const csvContent = [
+      headers.join(","),
+      ...docTypes.map(t => `"${t.name}","${t.prefix}","${t.category || ""}","${t.description || ""}"`)
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'document_types.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await AdminService.createDocumentType(formData as any);
+      setIsModalOpen(false);
+      setFormData({ name: "", prefix: "", category: "", description: "" });
+      await loadData();
+    } catch (err) {
+      console.error("Failed to create document type", err);
+      alert("Failed to create document type");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-[24px] bg-surface flex flex-col gap-[24px]">
@@ -40,11 +84,11 @@ export default function DocumentTypeManagementPage() {
           <p className="text-body-sm text-on-surface-variant mt-[4px]">Configure and manage document classifications, prefixes, and lifecycle templates.</p>
         </div>
         <div className="flex items-center gap-[8px]">
-          <button className="h-[36px] px-[16px] flex items-center gap-[8px] bg-surface-container-lowest border border-outline-variant rounded text-on-surface text-label-caps hover:bg-surface-container-low transition-colors shadow-sm">
+          <button onClick={handleExport} className="h-[36px] px-[16px] flex items-center gap-[8px] bg-surface-container-lowest border border-outline-variant rounded text-on-surface text-label-caps hover:bg-surface-container-low transition-colors shadow-sm">
             <Download size={18} />
             Export List
           </button>
-          <button className="h-[36px] px-[16px] flex items-center gap-[8px] bg-primary text-on-primary rounded text-label-caps hover:bg-primary/90 transition-colors shadow-sm">
+          <button onClick={() => setIsModalOpen(true)} className="h-[36px] px-[16px] flex items-center gap-[8px] bg-primary text-on-primary rounded text-label-caps hover:bg-primary/90 transition-colors shadow-sm">
             <Plus size={18} />
             New Document Type
           </button>
@@ -141,6 +185,45 @@ export default function DocumentTypeManagementPage() {
           </table>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface-container-lowest rounded-lg shadow-lg w-full max-w-md flex flex-col">
+            <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+              <h2 className="text-title-lg font-semibold text-on-surface">New Document Type</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                <Ban size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleCreate} className="flex flex-col p-6 gap-4">
+              <div>
+                <label className="block text-label-caps text-on-surface-variant mb-1">Name *</label>
+                <input required type="text" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Standard Operating Procedure" />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-label-caps text-on-surface-variant mb-1">Code (Prefix) *</label>
+                  <input required type="text" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.prefix} onChange={(e) => setFormData({...formData, prefix: e.target.value})} placeholder="e.g. SOP" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-label-caps text-on-surface-variant mb-1">Category *</label>
+                  <input required type="text" className="w-full h-10 px-3 rounded border border-outline-variant bg-surface" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="e.g. Quality" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-label-caps text-on-surface-variant mb-1">Description</label>
+                <textarea className="w-full p-3 rounded border border-outline-variant bg-surface resize-none" rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded text-body-sm text-on-surface hover:bg-surface-container-low transition-colors border border-outline-variant">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded text-body-sm text-on-primary bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {isSubmitting ? "Saving..." : "Create Type"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

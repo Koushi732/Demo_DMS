@@ -22,6 +22,7 @@ from app.schemas.document import (
     DocumentResponse,
     DocumentListResponse,
     DocumentVersionResponse,
+    DocumentTypeCreate,
     DocumentTypeResponse,
     DepartmentBrief,
     OwnerBrief,
@@ -208,6 +209,28 @@ async def list_document_types(
     return [DocumentTypeResponse.model_validate(t) for t in types]
 
 
+@router.post("/types", response_model=DocumentTypeResponse, status_code=201)
+async def create_document_type(
+    doc_type_in: DocumentTypeCreate,
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a new document type for the organization."""
+    new_type = DocumentType(
+        organization_id=org_id,
+        name=doc_type_in.name,
+        prefix=doc_type_in.prefix,
+        category=doc_type_in.category,
+        description=doc_type_in.description,
+        default_review_period_days=doc_type_in.default_review_period_days,
+        is_active=True
+    )
+    db.add(new_type)
+    await db.commit()
+    await db.refresh(new_type)
+    return DocumentTypeResponse.model_validate(new_type)
+
+
 # ─── Folders ─────────────────────────────────────────────────────
 @router.get("/folders", response_model=List[FolderResponse])
 async def list_folders(
@@ -326,6 +349,63 @@ async def get_document(
         raise HTTPException(status_code=404, detail="Document not found")
 
     return _doc_to_response(doc)
+
+
+# ─── PATCH /documents/{id} ──────────────────────────────────────
+@router.patch("/{document_id}", response_model=DocumentResponse)
+async def update_document(
+    document_id: UUID,
+    body: DocumentUpdate,
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a document's metadata."""
+    stmt = (
+        select(Document)
+        .options(
+            selectinload(Document.current_version),
+            selectinload(Document.document_type),
+            selectinload(Document.department),
+            selectinload(Document.owner),
+        )
+        .where(Document.id == document_id, Document.organization_id == org_id)
+    )
+    result = await db.execute(stmt)
+    doc = result.scalars().first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    update_data = body.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(doc, key, value)
+    
+    doc.updated_at = func.now()
+    await db.commit()
+    await db.refresh(doc)
+    return _doc_to_response(doc)
+
+
+# ─── DELETE /documents/{id} ─────────────────────────────────────
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def archive_document(
+    document_id: UUID,
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Archive a document."""
+    stmt = select(Document).where(Document.id == document_id, Document.organization_id == org_id)
+    result = await db.execute(stmt)
+    doc = result.scalars().first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Instead of hard delete, we set status to ARCHIVED
+    doc.status = DocumentStatusEnum.ARCHIVED
+    doc.updated_at = func.now()
+    await db.commit()
+    return None
 
 
 # ─── POST /documents ────────────────────────────────────────────
@@ -629,3 +709,82 @@ async def update_document_metadata(
     result = await db.execute(stmt)
     updated_metadata = result.scalars().all()
     return [DocumentMetadataResponse.model_validate(m) for m in updated_metadata]
+
+# ─── Periodic Review Endpoints ────────────────────────────────────
+
+@router.post("/{document_id}/revision", response_model=DocumentResponse)
+async def create_document_revision(
+    document_id: UUID,
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a new revision for a document."""
+    stmt = select(Document).options(
+        selectinload(Document.current_version),
+        selectinload(Document.document_type),
+        selectinload(Document.department),
+        selectinload(Document.owner)
+    ).where(Document.id == document_id, Document.organization_id == org_id)
+    result = await db.execute(stmt)
+    doc = result.scalars().first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc.status = DocumentStatusEnum.DRAFT
+    doc.updated_at = func.now()
+    await db.commit()
+    await db.refresh(doc)
+    return _doc_to_response(doc)
+
+@router.post("/{document_id}/continue", response_model=DocumentResponse)
+async def continue_current_version(
+    document_id: UUID,
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Continue current version (reset review date)."""
+    stmt = select(Document).options(
+        selectinload(Document.current_version),
+        selectinload(Document.document_type),
+        selectinload(Document.department),
+        selectinload(Document.owner)
+    ).where(Document.id == document_id, Document.organization_id == org_id)
+    result = await db.execute(stmt)
+    doc = result.scalars().first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    from datetime import date, timedelta
+    doc.next_review_date = date.today() + timedelta(days=365) # extend by 1 year
+    doc.status = DocumentStatusEnum.EFFECTIVE
+    doc.updated_at = func.now()
+    await db.commit()
+    await db.refresh(doc)
+    return _doc_to_response(doc)
+
+@router.post("/{document_id}/obsolete", response_model=DocumentResponse)
+async def mark_document_obsolete(
+    document_id: UUID,
+    org_id: str = Depends(get_current_organization_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a document as obsolete."""
+    stmt = select(Document).options(
+        selectinload(Document.current_version),
+        selectinload(Document.document_type),
+        selectinload(Document.department),
+        selectinload(Document.owner)
+    ).where(Document.id == document_id, Document.organization_id == org_id)
+    result = await db.execute(stmt)
+    doc = result.scalars().first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc.status = DocumentStatusEnum.OBSOLETE
+    doc.updated_at = func.now()
+    await db.commit()
+    await db.refresh(doc)
+    return _doc_to_response(doc)
