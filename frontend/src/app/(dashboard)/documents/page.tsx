@@ -32,7 +32,7 @@ export default function DocumentRepositoryPage() {
         const data = await DocumentService.listDocuments();
         setDocuments(data.items);
         setTotal(data.total);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
         setError("Failed to load documents.");
       } finally {

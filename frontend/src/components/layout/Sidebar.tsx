@@ -173,7 +173,8 @@ export function Sidebar() {
                 const { createClient } = await import('@/utils/supabase/client');
                 const supabase = createClient();
                 await supabase.auth.signOut();
-                window.location.href = '/login';
+                const routerModule = await import("next/navigation");
+                routerModule.redirect('/login');
               }}
               className="w-full flex items-center gap-[16px] px-[16px] py-[8px] text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 rounded-[4px] text-body-md text-left"
             >

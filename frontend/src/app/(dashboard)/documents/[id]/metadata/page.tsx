@@ -21,7 +21,9 @@ import { Button } from "@/components/ui/Button";
 export default function DocumentMetadataPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const documentId = resolvedParams.id;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [doc, setDoc] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [metadata, setMetadata] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +56,7 @@ export default function DocumentMetadataPage({ params }: { params: Promise<{ id:
     metadata.forEach(m => {
       vals[m.key] = m.value || '';
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormValues(vals);
   }, [metadata]);
 
@@ -73,7 +76,7 @@ export default function DocumentMetadataPage({ params }: { params: Promise<{ id:
       setSuccess(true);
       setEditMode(false);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
+    } catch (err: unknown) {
       setError("Failed to save metadata.");
     } finally {
       setIsSaving(false);

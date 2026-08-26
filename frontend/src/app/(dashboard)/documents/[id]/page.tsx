@@ -11,13 +11,12 @@ import {
   History, 
   Building2,
   BrainCircuit,
-  AlertCircle,
-  Eye
+  BrainCircuit,
+  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge, StatusVariant } from "@/components/ui/StatusBadge";
 import { DocumentService, DocumentResponse } from "@/services/documentService";
-import { notFound } from "next/navigation";
 
 export default function DocumentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -32,7 +31,7 @@ export default function DocumentDetailsPage({ params }: { params: Promise<{ id: 
         setIsLoading(true);
         const data = await DocumentService.getDocument(documentId);
         setDoc(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
         setError("Document not found or error loading document.");
       } finally {
@@ -174,7 +173,7 @@ export default function DocumentDetailsPage({ params }: { params: Promise<{ id: 
                   <BrainCircuit size={18} /> AI Insight: Compliance Check
                 </h3>
                 <p className="text-teal-800 text-sm">
-                  Section 3 (Responsibilities) lacks explicit mention of the Quality Assurance department's final sign-off authority, which was flagged in the previous audit.
+                  Section 3 (Responsibilities) lacks explicit mention of the Quality Assurance department&apos;s final sign-off authority, which was flagged in the previous audit.
                 </p>
               </section>
             </div>

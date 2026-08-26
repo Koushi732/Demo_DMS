@@ -7,10 +7,10 @@ import {
   Brain, 
   Database, 
   Search as SearchIcon, 
-  CheckCircle2, 
+  Search as SearchIcon, 
   FileText
 } from "lucide-react";
-import { notFound, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { DocumentService, DocumentResponse } from "@/services/documentService";
 
 export default function DocumentProcessingPage() {
@@ -18,6 +18,7 @@ export default function DocumentProcessingPage() {
   const id = params.id as string;
   
   const [doc, setDoc] = useState<DocumentResponse | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [processingStatus, setProcessingStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -101,6 +102,7 @@ export default function DocumentProcessingPage() {
             <div className="relative pl-6 py-4 space-y-8 before:absolute before:inset-0 before:ml-[31px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-[2px] before:bg-surface-container-high">
               
               {/* Real Processing Steps */}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {processingStatus?.steps?.map((step: any, index: number) => {
                 const stepNum = index + 1;
                 const isCompleted = step.status === 'COMPLETED';

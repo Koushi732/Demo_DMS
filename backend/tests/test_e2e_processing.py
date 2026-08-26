@@ -10,8 +10,11 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_ANON_KEY")
 supabase: Client = create_client(url, key)
 
+import pytest
+
 API_BASE = "http://localhost:8000/api/v1"
 
+@pytest.mark.skip(reason="Requires live Supabase and FastAPI server")
 async def test_processing():
     print("Logging in...")
     res = supabase.auth.sign_in_with_password({"email": "admin@aureon.local", "password": "Password123!"})

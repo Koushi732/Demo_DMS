@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 from uuid import UUID
@@ -51,8 +51,7 @@ class DocumentVersionResponse(BaseModel):
     created_by: Optional[UUID] = None
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentTypeResponse(BaseModel):
@@ -62,16 +61,14 @@ class DocumentTypeResponse(BaseModel):
     category: str
     description: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DepartmentBrief(BaseModel):
     id: UUID
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OwnerBrief(BaseModel):
@@ -80,8 +77,7 @@ class OwnerBrief(BaseModel):
     last_name: str
     email: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentResponse(BaseModel):
@@ -113,8 +109,7 @@ class DocumentResponse(BaseModel):
     department: Optional[DepartmentBrief] = None
     owner: Optional[OwnerBrief] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentListResponse(BaseModel):
@@ -138,8 +133,7 @@ class FolderResponse(BaseModel):
     path: Optional[str] = None
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── Metadata Schemas ─────────────────────────────────────────────

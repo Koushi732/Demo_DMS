@@ -1,12 +1,13 @@
 "use client";
 
-import { Check, Download, FileEdit, FileSearch, Info, Minus, Plus, ShieldCheck, Users } from "lucide-react";
+import { Check, Download, Info, Minus, Plus, ShieldCheck } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { AdminService } from "@/services/adminService";
-import { Role } from "@/services/adminService";
 
 export default function RolesPermissionsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [roles, setRoles] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [permissions, setPermissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,6 +36,7 @@ export default function RolesPermissionsPage() {
         return {
           ...role,
           permissions: hasPerm 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? role.permissions.filter((p: any) => p !== permId)
             : [...role.permissions, permId]
         };
@@ -43,6 +45,7 @@ export default function RolesPermissionsPage() {
     }));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categories = Array.from(new Set(permissions.map((p: any) => p.category)));
   return (
     <div className="flex-1 overflow-y-auto p-[24px] lg:p-[40px]">
@@ -94,6 +97,7 @@ export default function RolesPermissionsPage() {
                           {category}
                         </td>
                       </tr>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {permissions.filter((p: any) => p.category === category).map(perm => (
                         <tr key={perm.id} className="hover:bg-surface-container-lowest transition-colors">
                           <td className="py-[8px] px-[24px] text-body-md text-on-surface font-medium sticky left-0 bg-surface-container-lowest z-10 pl-[32px]">

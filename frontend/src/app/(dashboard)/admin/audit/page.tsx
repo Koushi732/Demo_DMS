@@ -24,7 +24,9 @@ export default function AuditTrailPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   return (

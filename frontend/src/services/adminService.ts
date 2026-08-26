@@ -35,7 +35,21 @@ export interface WorkflowTemplate {
   id: string;
   name: string;
   description: string;
-  steps: any[];
+  steps: unknown[];
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface DocumentType {
+  id: string;
+  name: string;
+  prefix: string;
+  category: string;
+  description?: string;
 }
 
 export const AdminService = {
@@ -43,20 +57,20 @@ export const AdminService = {
     return apiClient.get<Role[]>('/auth/roles');
   },
   
-  async getPermissions(): Promise<any[]> {
+  async getPermissions(): Promise<Permission[]> {
     return []; // Out of scope for current permissions model
   },
   
-  async getDocumentTypes(): Promise<any[]> {
-    return apiClient.get<any[]>('/documents/types');
+  async getDocumentTypes(): Promise<DocumentType[]> {
+    return apiClient.get<DocumentType[]>('/documents/types');
   },
 
-  async getSystemSettings(): Promise<any> {
-    return apiClient.get<any>('/dashboard/settings');
+  async getSystemSettings(): Promise<SystemSettings> {
+    return apiClient.get<SystemSettings>('/dashboard/settings');
   },
 
-  async updateSystemSettings(settings: any): Promise<any> {
-    return apiClient.put<any>('/dashboard/settings', settings);
+  async updateSystemSettings(settings: Partial<SystemSettings>): Promise<SystemSettings> {
+    return apiClient.put<SystemSettings>('/dashboard/settings', settings);
   },
 
   async getUsers(): Promise<User[]> {

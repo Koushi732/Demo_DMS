@@ -41,7 +41,7 @@ export default function LoginPage() {
       // Success
       router.push("/dashboard");
       router.refresh(); // Refresh to ensure layout gets new session
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError("Network error. Please check your connection and try again.");
       setLoading(false);
     }

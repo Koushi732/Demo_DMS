@@ -40,8 +40,6 @@ function SearchContent() {
     };
     if (q) {
       fetchSearch();
-    } else {
-      setLoading(false);
     }
   }, [q]);
 
@@ -59,7 +57,7 @@ function SearchContent() {
             <div>
               <h2 className="text-title-sm text-on-surface">Search Results</h2>
               <p className="text-body-sm text-on-surface-variant mt-[4px]">
-                {loading ? "Searching..." : `Showing ${searchResults.length} results for "${q}"`}
+                {loading && q ? "Searching..." : `Showing ${searchResults.length} results for "${q}"`}
               </p>
             </div>
             <div className="flex gap-[8px]">
@@ -76,7 +74,7 @@ function SearchContent() {
           <div className="flex flex-col gap-[16px]">
             {!loading && searchResults.length === 0 && (
               <div className="p-8 text-center text-on-surface-variant">
-                No documents found for "{q}".
+                No documents found for &quot;{q}&quot;.
               </div>
             )}
             

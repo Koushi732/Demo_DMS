@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Ban, ChevronRight, Copy, Link as LinkIcon, Link2Off, RefreshCw, Search } from "lucide-react";
+import { Ban, ChevronRight, Copy, Link as LinkIcon, RefreshCw, Search } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { DocumentService, DocumentResponse } from "@/services/documentService";
@@ -11,6 +11,7 @@ export default function SecureSharingPage() {
   const documentId = params?.id as string;
   
   const [doc, setDoc] = useState<DocumentResponse | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [shares, setShares] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

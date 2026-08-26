@@ -110,11 +110,11 @@ export const DocumentService = {
     return apiClient.get<DocumentResponse>(`/documents/${id}`);
   },
 
-  async createDocument(data: any): Promise<DocumentResponse> {
+  async createDocument(data: Record<string, unknown>): Promise<DocumentResponse> {
     return apiClient.post<DocumentResponse>('/documents', data);
   },
 
-  async updateDocument(id: string, data: any): Promise<DocumentResponse> {
+  async updateDocument(id: string, data: Record<string, unknown>): Promise<DocumentResponse> {
     return apiClient.patch<DocumentResponse>(`/documents/${id}`, data);
   },
 
@@ -176,27 +176,27 @@ export const DocumentService = {
     return apiClient.get<DocumentListResponse>('/documents/search', { params });
   },
 
-  async getSummary(documentId: string): Promise<any> {
-    return apiClient.get(`/documents/${documentId}/summary`);
+  async getSummary(documentId: string): Promise<{ summary: string }> {
+    return apiClient.get<{ summary: string }>(`/documents/${documentId}/summary`);
   },
 
-  async getExtractedMetadata(documentId: string): Promise<any> {
-    return apiClient.get(`/documents/${documentId}/extract-metadata`);
+  async getExtractedMetadata(documentId: string): Promise<Record<string, unknown>> {
+    return apiClient.get<Record<string, unknown>>(`/documents/${documentId}/extract-metadata`);
   },
 
-  async askQuestion(documentId: string, question: string): Promise<any> {
-    return apiClient.post(`/documents/${documentId}/ask`, { question });
+  async askQuestion(documentId: string, question: string): Promise<{ answer: string }> {
+    return apiClient.post<{ answer: string }>(`/documents/${documentId}/ask`, { question });
   },
 
-  async getShares(documentId: string): Promise<any[]> {
-    return apiClient.get(`/documents/${documentId}/shares`);
+  async getShares(documentId: string): Promise<unknown[]> {
+    return apiClient.get<unknown[]>(`/documents/${documentId}/shares`);
   },
 
-  async createShare(documentId: string, data: any): Promise<any> {
-    return apiClient.post(`/documents/${documentId}/shares`, data);
+  async createShare(documentId: string, data: Record<string, unknown>): Promise<unknown> {
+    return apiClient.post<unknown>(`/documents/${documentId}/shares`, data);
   },
 
-  async getProcessingStatus(documentId: string): Promise<any> {
-    return apiClient.get(`/documents/${documentId}/processing`);
+  async getProcessingStatus(documentId: string): Promise<{ status: string, message?: string }> {
+    return apiClient.get<{ status: string, message?: string }>(`/documents/${documentId}/processing`);
   }
 };

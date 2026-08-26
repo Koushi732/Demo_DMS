@@ -8,7 +8,7 @@ export interface AuditEvent {
   resource_type: string;
   resource_id?: string;
   details?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   timestamp: string;

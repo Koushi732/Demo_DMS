@@ -7,7 +7,6 @@ import {
   Download, 
   Check, 
   BrainCircuit,
-  MessageSquare,
   X,
   CheckCircle2
 } from "lucide-react";
@@ -33,14 +32,14 @@ export default function ApprovalReviewPage({ params }: { params: { id: string } 
         try {
           const wfData = await DocumentService.getWorkflow(params.id);
           setWorkflow(wfData);
-        } catch (e) {
+        } catch (e: unknown) {
           // No active workflow
         }
 
         try {
           const urlData = await DocumentService.getPreviewUrl(params.id);
           setPreviewUrl(urlData.url);
-        } catch (e) {
+        } catch (e: unknown) {
           // No preview url (e.g. no version uploaded)
         }
       } catch (error) {
@@ -180,7 +179,7 @@ export default function ApprovalReviewPage({ params }: { params: { id: string } 
               <h3 className="text-label-caps text-on-surface-variant mb-[16px] tracking-wider">Approval Journey</h3>
               <div className="relative pl-6 space-y-[16px] before:absolute before:inset-y-0 before:left-[11px] before:w-[2px] before:bg-outline-variant before:z-0">
                 
-                {workflow.steps.map((step, idx) => (
+                {workflow.steps.map((step) => (
                   <div key={step.id} className="relative z-10 flex items-start gap-[16px]">
                     <div className={`w-6 h-6 rounded-full ${step.status === 'APPROVED' ? 'bg-[#10B981]' : (step.status === 'PENDING' ? 'bg-surface-container-lowest border-primary border-2' : 'bg-surface-container-lowest border-outline-variant border-2 border-dashed')} flex items-center justify-center shrink-0 mt-0.5 shadow-sm`}>
                       {step.status === 'APPROVED' && <Check size={14} className="text-white" strokeWidth={3} />}
@@ -194,7 +193,7 @@ export default function ApprovalReviewPage({ params }: { params: { id: string } 
                       {step.comments && (
                         <div className="bg-surface border border-outline-variant rounded p-[8px] relative mt-[8px]">
                           <div className="absolute -left-[5px] top-2 w-[8px] h-[8px] bg-surface border-l border-t border-outline-variant rotate-[-45deg]"></div>
-                          <p className="text-body-sm text-on-surface-variant italic">"{step.comments}"</p>
+                          <p className="text-body-sm text-on-surface-variant italic">&quot;{step.comments}&quot;</p>
                         </div>
                       )}
                     </div>

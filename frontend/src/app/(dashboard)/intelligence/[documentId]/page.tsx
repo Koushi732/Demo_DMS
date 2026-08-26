@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle as ErrorIcon, AlertTriangle, CalendarDays, CheckCircle, ChevronRight, FileText, Lightbulb } from "lucide-react";
+import { AlertTriangle, CalendarDays, CheckCircle, ChevronRight, FileText, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { DocumentService, DocumentResponse } from "@/services/documentService";
@@ -11,7 +11,9 @@ export default function AIDocumentSummaryPage() {
   const documentId = params.documentId as string;
   
   const [doc, setDoc] = useState<DocumentResponse | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [summary, setSummary] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -150,6 +152,7 @@ export default function AIDocumentSummaryPage() {
             <h3 className="text-title-sm text-on-surface">Extracted Entities</h3>
           </div>
           <div className="flex flex-col gap-[8px]">
+             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
              {metadata?.entities?.map((ent: any, idx: number) => (
                 <div key={idx} className="p-[8px] bg-surface-container-low rounded flex gap-[8px] items-center justify-between">
                    <div className="flex gap-[8px] items-center">

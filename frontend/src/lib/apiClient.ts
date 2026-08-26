@@ -3,7 +3,7 @@ import { createClient } from './supabase/client';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export class ApiError extends Error {
-  constructor(public status: number, public message: string, public data?: any) {
+  constructor(public status: number, public message: string, public data?: unknown) {
     super(message);
     this.name = 'ApiError';
   }
@@ -26,7 +26,7 @@ interface FetchOptions extends RequestInit {
 }
 
 export const apiClient = {
-  async fetch<T = any>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+  async fetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
     const { params, headers: customHeaders, ...restOptions } = options;
     
     // Build URL with query params
@@ -51,8 +51,8 @@ export const apiClient = {
     };
 
     // Auto-set Content-Type if body is JSON and not FormData
-    if (restOptions.body && !(restOptions.body instanceof FormData) && !headers['Content-Type' as keyof typeof headers]) {
-      (headers as any)['Content-Type'] = 'application/json';
+    if (restOptions.body && !(restOptions.body instanceof FormData) && !(headers as Record<string, string>)['Content-Type']) {
+      (headers as Record<string, string>)['Content-Type'] = 'application/json';
     }
 
     try {
@@ -63,7 +63,7 @@ export const apiClient = {
 
       if (!response.ok) {
         let errorMessage = response.statusText;
-        let errorData = null;
+        let errorData: unknown = null;
         try {
           errorData = await response.json();
           if (errorData.detail) {
@@ -71,7 +71,7 @@ export const apiClient = {
               ? errorData.detail 
               : JSON.stringify(errorData.detail);
           }
-        } catch (e) {
+        } catch (_) {
           // Response is not JSON
         }
         throw new ApiError(response.status, errorMessage, errorData);
@@ -95,17 +95,17 @@ export const apiClient = {
     return this.fetch<T>(endpoint, { ...options, method: 'GET' });
   },
 
-  async post<T>(endpoint: string, data?: any, options?: Omit<FetchOptions, 'method'>) {
+  async post<T>(endpoint: string, data?: unknown, options?: Omit<FetchOptions, 'method'>) {
     const body = data instanceof FormData ? data : data ? JSON.stringify(data) : undefined;
     return this.fetch<T>(endpoint, { ...options, method: 'POST', body });
   },
 
-  async put<T>(endpoint: string, data?: any, options?: Omit<FetchOptions, 'method'>) {
+  async put<T>(endpoint: string, data?: unknown, options?: Omit<FetchOptions, 'method'>) {
     const body = data instanceof FormData ? data : data ? JSON.stringify(data) : undefined;
     return this.fetch<T>(endpoint, { ...options, method: 'PUT', body });
   },
 
-  async patch<T>(endpoint: string, data?: any, options?: Omit<FetchOptions, 'method'>) {
+  async patch<T>(endpoint: string, data?: unknown, options?: Omit<FetchOptions, 'method'>) {
     const body = data instanceof FormData ? data : data ? JSON.stringify(data) : undefined;
     return this.fetch<T>(endpoint, { ...options, method: 'PATCH', body });
   },

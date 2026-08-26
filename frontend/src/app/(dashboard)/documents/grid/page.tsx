@@ -30,7 +30,7 @@ export default function DocumentGridPage() {
         const data = await DocumentService.listDocuments();
         setDocuments(data.items);
         setTotal(data.total);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
         setError("Failed to load documents.");
       } finally {
@@ -40,7 +40,7 @@ export default function DocumentGridPage() {
     loadDocs();
   }, []);
   // Grid view is fixed for this route, but we still keep state for the toggle UI
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [viewMode] = useState<"list" | "grid">("grid");
   
   const getStatusVariant = (status: string): StatusVariant => {
     switch (status) {

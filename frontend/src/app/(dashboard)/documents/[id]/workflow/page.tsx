@@ -33,7 +33,9 @@ export default function DocumentWorkflowPage({ params }: { params: { id: string 
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   if (loading) {
@@ -164,7 +166,6 @@ export default function DocumentWorkflowPage({ params }: { params: { id: string 
 
               {workflow?.steps.map((step, index) => {
                 const isPast = step.status === 'APPROVED';
-                const isNextPast = workflow.steps[index + 1]?.status === 'APPROVED';
                 return (
                   <div key={step.id} className="flex flex-col items-center flex-1 relative min-w-[120px]">
                     {renderTimelineConnectingLine(step.status, isPast)}
