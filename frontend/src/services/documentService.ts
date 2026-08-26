@@ -181,7 +181,7 @@ export const DocumentService = {
   },
 
   async getExtractedMetadata(documentId: string): Promise<any> {
-    return apiClient.get(`/documents/${documentId}/metadata`);
+    return apiClient.get(`/documents/${documentId}/extract-metadata`);
   },
 
   async askQuestion(documentId: string, question: string): Promise<any> {

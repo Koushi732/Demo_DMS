@@ -28,85 +28,93 @@ class ProcessingService:
             result = await db.execute(stmt)
             version = result.scalar_one_or_none()
         
-        if not version:
-            return
-            
-        stmt = select(Document).where(Document.id == document_id)
-        result = await db.execute(stmt)
-        document = result.scalar_one_or_none()
-        
-        if not document:
-            return
-
-        # Check for existing job or create one
-        stmt = select(DocumentProcessingJob).where(DocumentProcessingJob.document_version_id == version.id)
-        result = await db.execute(stmt)
-        job = result.scalar_one_or_none()
-        
-        if job:
-            job.status = "PROCESSING"
-            job.started_at = datetime.datetime.utcnow()
-            job.attempts += 1
-            job.error_message = None
-        else:
-            job = DocumentProcessingJob(
-                organization_id=document.organization_id,
-                document_version_id=version.id,
-                job_type="TEXT_EXTRACTION",
-                status="PROCESSING",
-                started_at=datetime.datetime.utcnow(),
-                attempts=1
-            )
-            db.add(job)
-            
-        document.processing_status = "PROCESSING"
-        await db.commit()
-        
-        try:
-            # 1. Download file from Supabase
-            res = supabase.storage.from_(settings.storage_bucket).download(version.storage_path)
-            if not res:
-                raise Exception("Failed to download file from storage.")
-            
-            # 2. Extract text
-            processor = get_processor_for_mime_type(version.mime_type)
-            extracted_text = processor.extract_text(res)
-            
-            # 3. Save extracted text
-            stmt = select(DocumentExtractedText).where(DocumentExtractedText.document_version_id == version.id)
+            if not version:
+                return
+                
+            stmt = select(Document).where(Document.id == document_id)
             result = await db.execute(stmt)
-            extracted = result.scalar_one_or_none()
+            document = result.scalar_one_or_none()
             
-            if extracted:
-                extracted.extracted_text = extracted_text
-                extracted.extraction_method = "NATIVE"
+            if not document:
+                return
+
+            # Check for existing job or create one
+            stmt = select(DocumentProcessingJob).where(DocumentProcessingJob.document_version_id == version.id)
+            result = await db.execute(stmt)
+            job = result.scalar_one_or_none()
+            
+            if job:
+                job.status = "PROCESSING"
+                job.started_at = datetime.datetime.utcnow()
+                job.attempts += 1
+                job.error_message = None
             else:
-                extracted = DocumentExtractedText(
+                job = DocumentProcessingJob(
                     organization_id=document.organization_id,
                     document_version_id=version.id,
-                    extracted_text=extracted_text,
-                    extraction_method="NATIVE"
+                    job_type="TEXT_EXTRACTION",
+                    status="PROCESSING",
+                    started_at=datetime.datetime.utcnow(),
+                    attempts=1
                 )
-                db.add(extracted)
-            
-            # Update job status
-            job.status = "COMPLETED"
-            job.completed_at = datetime.datetime.utcnow()
-            document.processing_status = "READY"
-            
+                db.add(job)
+                
+            document.processing_status = "PROCESSING"
             await db.commit()
             
-        except Exception as e:
-            await db.rollback()
-            
-            # Need a new transaction to update job failure
-            job.status = "FAILED"
-            job.error_message = str(e)
-            job.completed_at = datetime.datetime.utcnow()
-            document.processing_status = "FAILED"
-            db.add(job)
-            db.add(document)
-            await db.commit()
+            try:
+                # 1. Download file from Supabase
+                res = supabase.storage.from_(settings.storage_bucket).download(version.storage_path)
+                if not res:
+                    raise Exception("Failed to download file from storage.")
+                
+                # 2. Extract text
+                processor = get_processor_for_mime_type(version.mime_type)
+                extracted_text = processor.extract_text(res)
+                
+                # 3. Save extracted text
+                stmt = select(DocumentExtractedText).where(DocumentExtractedText.document_version_id == version.id)
+                result = await db.execute(stmt)
+                extracted = result.scalar_one_or_none()
+                
+                if extracted:
+                    extracted.extracted_text = extracted_text
+                    extracted.extraction_method = "NATIVE"
+                else:
+                    extracted = DocumentExtractedText(
+                        organization_id=document.organization_id,
+                        document_version_id=version.id,
+                        extracted_text=extracted_text,
+                        extraction_method="NATIVE"
+                    )
+                    db.add(extracted)
+                
+                # Update job status
+                job.status = "COMPLETED"
+                job.completed_at = datetime.datetime.utcnow()
+                document.processing_status = "READY"
+                
+                await db.commit()
+                
+            except Exception as e:
+                await db.rollback()
+                
+                # Re-fetch objects after rollback since they may be expired
+                stmt = select(DocumentProcessingJob).where(DocumentProcessingJob.document_version_id == version_id)
+                result = await db.execute(stmt)
+                job = result.scalar_one_or_none()
+                
+                stmt = select(Document).where(Document.id == document_id)
+                result = await db.execute(stmt)
+                document = result.scalar_one_or_none()
+                
+                if job:
+                    job.status = "FAILED"
+                    job.error_message = str(e)
+                    job.completed_at = datetime.datetime.utcnow()
+                if document:
+                    document.processing_status = "FAILED"
+                await db.commit()
 
     @staticmethod
     async def get_processing_status(db: AsyncSession, document_id: UUID) -> Dict[str, Any]:

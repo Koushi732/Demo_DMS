@@ -44,10 +44,13 @@ export default function DocumentRepositoryPage() {
   
   const getStatusVariant = (status: string): StatusVariant => {
     switch (status) {
-      case "Effective": return "effective";
-      case "Approved": return "approved";
-      case "Pending Review": return "pending";
-      case "Draft": return "draft";
+      case "EFFECTIVE": return "effective";
+      case "APPROVED": return "approved";
+      case "UNDER_REVIEW": return "pending";
+      case "OBSOLETE": return "obsolete";
+      case "ARCHIVED": return "archived";
+      case "SUPERSEDED": return "superseded";
+      case "DRAFT": 
       default: return "draft";
     }
   };

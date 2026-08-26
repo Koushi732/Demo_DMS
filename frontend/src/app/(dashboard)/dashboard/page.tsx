@@ -30,7 +30,7 @@ export default function DashboardPage() {
         setIsLoading(true);
         const [statsData, docsData, metricsData] = await Promise.all([
           DocumentService.getStats(),
-          DocumentService.listDocuments({ status: "Pending Approval", page_size: 5 }),
+          DocumentService.listDocuments({ status: "UNDER_REVIEW", page_size: 5 }),
           DashboardService.getMetrics()
         ]);
         setStats(statsData);

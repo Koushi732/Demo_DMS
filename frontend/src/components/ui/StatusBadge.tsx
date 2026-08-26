@@ -1,13 +1,25 @@
 import { cn } from "@/lib/utils";
 
 export type StatusVariant =
-  | "effective"
-  | "approved"
-  | "pending"
   | "draft"
+  | "pending"
+  | "approved"
+  | "effective"
   | "error"
-  | "superseded"
-  | "obsolete";
+  | "obsolete"
+  | "archived"
+  | "superseded";
+
+const statusVariants: Record<StatusVariant, string> = {
+  draft: "status-draft",
+  pending: "status-pending",
+  approved: "status-approved",
+  effective: "status-effective",
+  error: "status-error",
+  obsolete: "status-obsolete",
+  archived: "status-archived",
+  superseded: "status-superseded",
+};
 
 interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant: StatusVariant;

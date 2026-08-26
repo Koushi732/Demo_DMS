@@ -45,7 +45,7 @@ async def get_document_summary(
     
     return result
 
-@router.get("/{document_id}/metadata")
+@router.get("/{document_id}/extract-metadata")
 async def get_document_extracted_metadata(
     document_id: UUID,
     db: AsyncSession = Depends(get_db),

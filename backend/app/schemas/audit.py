@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 from datetime import datetime
 from uuid import UUID
 
@@ -13,7 +13,7 @@ class AuditEventResponse(BaseModel):
     resource_type: str
     resource_id: Optional[UUID] = None
     details: Optional[str] = None
-    metadata: Optional[Any] = None
+    event_metadata: Optional[Dict[str, Any]] = None
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
     timestamp: datetime

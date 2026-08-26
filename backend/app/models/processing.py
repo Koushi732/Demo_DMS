@@ -2,10 +2,10 @@ from sqlalchemy import Column, String, ForeignKey, Text, Integer, DateTime
 from sqlalchemy.dialects.postgresql import UUID, TSVECTOR
 from sqlalchemy.orm import relationship
 
-from .base import Base, UUIDMixin, TimestampMixin
+from .base import Base, UUIDMixin
 
 
-class DocumentProcessingJob(Base, UUIDMixin, TimestampMixin):
+class DocumentProcessingJob(Base, UUIDMixin):
     __tablename__ = "document_processing_jobs"
 
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
@@ -16,6 +16,7 @@ class DocumentProcessingJob(Base, UUIDMixin, TimestampMixin):
     attempts = Column(Integer, default=0)
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=True)
     
     organization = relationship("Organization")
     document_version = relationship("DocumentVersion")

@@ -161,13 +161,11 @@ class WorkflowService:
             document.status = DocumentStatusEnum.DRAFT # Revert back
             
             await NotificationService.send_notification(
-                db=db,
-                user_id=document.owner_id,
-                title="Workflow Rejected",
-                message=f"The workflow for {document.document_number} was rejected.",
-                type="WORKFLOW_EVENT",
-                related_entity_id=workflow.id,
-                related_entity_type="WORKFLOW"
+                db, 
+                step.assigned_to_id, 
+                "Workflow Assigned", 
+                f"You have been assigned to review document {document.document_number}", 
+                "info"
             )
         elif all_steps_approved:
             workflow.status = WorkflowStatusEnum.COMPLETED

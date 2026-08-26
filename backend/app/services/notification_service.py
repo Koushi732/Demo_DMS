@@ -47,8 +47,6 @@ class NotificationService:
             title=title,
             message=message,
             type=type,
-            related_entity_id=related_entity_id,
-            related_entity_type=related_entity_type,
             read=False
         )
         db.add(notification)
